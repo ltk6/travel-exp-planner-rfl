@@ -15,7 +15,9 @@ N2 is the vision-to-text bridge in the pipeline. It accepts raw image bytes, opt
 ```
 backend/modules/n2_image_processing/
 ├── __init__.py    # Re-exports process_image
-├── processor.py   # Core logic: resize, encode, Groq vision API call
+├── pipeline.py   # Core logic: resize, encode, Groq vision API call
+├── config.py
+├── schemas.py
 └── requirements.txt
 ```
 

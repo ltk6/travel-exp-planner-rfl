@@ -3,11 +3,14 @@ import base64
 import urllib.request
 from PIL import Image
 import io
-from config import GROQ_API_KEY, GROQ_VISION_MODEL, GROQ_API_URL, USER_AGENT, setup_logging
+import time
+from typing import Union
+
+from config import GROQ_API_KEY, setup_logging
+from .config import GROQ_VISION_MODEL, GROQ_API_URL, USER_AGENT
 logger = setup_logging("N2")
 
-from typing import Union
-from backend.shared.contracts.n2_contracts import N2ImageInput
+from .schemas import N2ImageInput, N2ImageOutput
 
 def process_image(data: Union[N2ImageInput, dict]) -> dict:
     """
@@ -16,15 +19,16 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
     Input:  {"image": bytes}
     Output: {"img_desc": "..."}
     """
+    start_time = time.perf_counter()
     validated = N2ImageInput.model_validate(data) if isinstance(data, dict) else data
     image_bytes = validated.image
     if not image_bytes:
         logger.warning("No image provided to N2")
-        return {
-            "img_desc": "",
-            "error": "No image provided"
-        }
-
+        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        return N2ImageOutput(
+            img_desc="",
+            metadata={"error": "No image provided", "latency_ms": latency_ms}
+        ).model_dump()
 
     logger.info(f"Processing image ({len(image_bytes)} bytes) via Groq Vision...")
 
@@ -96,14 +100,24 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
 
         choices = result.get("choices", [])
         if not choices:
-            return {"img_desc": "", "error": "Empty response from model"}
+            latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            return N2ImageOutput(
+                img_desc="", 
+                metadata={"error": "Empty response from model", "latency_ms": latency_ms}
+            ).model_dump()
 
         text = choices[0].get("message", {}).get("content", "")
         if not text:
-            return {"img_desc": "", "error": "No text returned (possible safety block or invalid image)"}
+            latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            return N2ImageOutput(
+                img_desc="", 
+                metadata={"error": "No text returned (possible safety block or invalid image)", "latency_ms": latency_ms}
+            ).model_dump()
 
+        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
         metadata = {
             "model": GROQ_VISION_MODEL,
+            "latency_ms": latency_ms,
             "usage": {
                 "prompt_tokens":     prompt_tokens,
                 "completion_tokens": completion_tokens,
@@ -111,23 +125,31 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
             },
         }
 
-        return {
-            "img_desc": text.strip(),
-            "metadata": metadata,
-        }
+        return N2ImageOutput(
+            img_desc=text.strip(),
+            metadata=metadata,
+        ).model_dump()
 
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8")
         logger.error(f"HTTPError in N2 image processing: {e.code} - {error_body}")
-        return {
-            "img_desc": "", 
-            "error": f"HTTPError: {e.code} - {error_body}",
-            "metadata": {"model": GROQ_VISION_MODEL, "usage": {}}
-        }
+        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        return N2ImageOutput(
+            img_desc="", 
+            metadata={
+                "error": f"HTTPError: {e.code} - {error_body}",
+                "model": GROQ_VISION_MODEL, 
+                "latency_ms": latency_ms
+            }
+        ).model_dump()
     except Exception as e:
         logger.exception(f"Exception in N2 image processing: {e}")
-        return {
-            "img_desc": "",
-            "error": str(e),
-            "metadata": {"model": GROQ_VISION_MODEL, "usage": {}}
-        }
+        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        return N2ImageOutput(
+            img_desc="",
+            metadata={
+                "error": str(e),
+                "model": GROQ_VISION_MODEL, 
+                "latency_ms": latency_ms
+            }
+        ).model_dump()
