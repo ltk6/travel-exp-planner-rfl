@@ -19,9 +19,11 @@ By establishing a clear convention, N0 ensures that all modules in the distribut
 
 ```text
 backend/modules/n0_sample/
-├── __init__.py          # Re-exports the public API run_sample()
-├── sample_logic.py      # Core business logic implementation
-└── requirements.txt     # Local module dependencies
+├── __init__.py         # Re-exports the public API run_sample()
+├── pipeline.py         # Core business logic implementation
+├── config.py           # Local module configurations
+├── schemas.py          # Local module schemas
+└── requirements.txt    # Local module dependencies
 ```
 
 ---
