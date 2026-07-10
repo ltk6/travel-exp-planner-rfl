@@ -16,27 +16,26 @@ Weights are resolved dynamically using shared/weights.
 """
 
 from __future__ import annotations
-
 import logging
 import math
 from typing import Any, Union
-from backend.shared.contracts.n4_contracts import N4RankInput
 
 from config import setup_logging
 logger = setup_logging("N4")
 
 from backend.shared.weights import get_weights
+from backend.shared.math import cosine as _cosine_shared
+from .schemas import N4RankInput
+
 
 # ── Helpers ───────────────────────────────────────────────────
-
-from backend.shared.math import cosine as _cosine_shared
-
 
 def _cosine(a: list[float] | None, b: list[float] | None) -> float:
     """Cosine similarity in [-1, 1]; returns 0.0 if either vector is None, empty, or different length."""
     if a and b and len(a) != len(b):
         logger.warning("[N4] Vector length mismatch: %d vs %d", len(a), len(b))
     return _cosine_shared(a, b)
+
 
 # ── Scoring ───────────────────────────────────────────────────
 

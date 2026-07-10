@@ -15,7 +15,8 @@ N4 ranks candidate locations using weighted multi-channel cosine similarity. It 
 ```
 backend/modules/n4_location_ranking/
 ├── __init__.py         # Re-exports rank_locations
-├── rank_locations.py   # Scoring, weighting, normalization logic
+├── pipeline.py   # Scoring, weighting, normalization logic
+├── schemas.py
 └── requirements.txt
 ```
 
