@@ -41,11 +41,11 @@ if "%NEED_PIP%"=="1" (
     echo [OK] Python requirements up-to-date (delete %REQ_MARKER% to force reinstall)
 )
 
-:: Sanity check: flask must be importable inside the venv
-python -c "import flask" 2>nul
+:: Sanity check: fastapi must be importable inside the venv
+python -c "import fastapi" 2>nul
 if errorlevel 1 (
-    echo [WARN] Flask not in venv. Forcing direct install...
-    python -m pip install flask flask-cors
+    echo [WARN] FastAPI not in venv. Forcing direct install...
+    python -m pip install fastapi uvicorn[standard]
 )
 
 set PYTHONPATH=%cd%
@@ -70,14 +70,14 @@ echo =======================================
 
 set BACKEND_RUNNING=0
 set FRONTEND_RUNNING=0
-python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.5); s.connect(('127.0.0.1', 5000))" >nul 2>&1 && set BACKEND_RUNNING=1
+python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.5); s.connect(('127.0.0.1', 8000))" >nul 2>&1 && set BACKEND_RUNNING=1
 python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.5); s.connect(('127.0.0.1', 3000))" >nul 2>&1 && set FRONTEND_RUNNING=1
 
 if "%BACKEND_RUNNING%"=="1" (
-    echo [OK] Backend already on :5000 - skip launching
+    echo [OK] Backend already on :8000 - skip launching
 ) else (
-    echo [INFO] Launching backend on :5000...
-    start "Travel Planner - Backend (:5000)" cmd /k "call venv\Scripts\activate.bat && set PYTHONPATH=%cd% && python -m backend.n8_orchestrator.app"
+    echo [INFO] Launching backend on :8000...
+    start "Travel Planner - Backend (:8000)" cmd /k "call venv\Scripts\activate.bat && set PYTHONPATH=%cd% && python -m backend.n18_orchestrator.app"
 )
 
 if "%FRONTEND_RUNNING%"=="1" (
@@ -108,9 +108,7 @@ start "" http://localhost:3000
 echo.
 echo [SUCCESS] Services:
 echo   Frontend:  http://localhost:3000
-echo   Backend:   http://localhost:5000/health
-echo.
-echo Legacy Streamlit fallback: legacy_run.bat
+echo   Backend:   http://localhost:8000/health
 echo.
 pause
 endlocal
