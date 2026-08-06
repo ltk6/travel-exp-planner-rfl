@@ -1,17 +1,15 @@
-# N8 Orchestrator Module
+# N18 Orchestrator Module
 
-N8 is the backend API layer for the project. It exposes HTTP endpoints, validates protected access, coordinates all AI and data workflows, manages caching for location records and image assets, and handles user authentication and recommendation history.
+N18 is the primary backend API layer for the project, succeeding the legacy N8 (Flask) orchestrator. Built with FastAPI, it exposes high-performance asynchronous HTTP endpoints, validates protected access, coordinates all AI and data workflows, manages caching for location records and image assets, and handles user authentication and recommendation history.
 
 ## Responsibilities
 
-- Start and configure the Flask application
+- Start and configure the FastAPI application
 - Register API routes and apply CORS rules
-- Protect selected routes with an internal request key
-- Deduplicate in-flight requests (idempotency guard)
-- Warm up heavy modules in a background thread at startup
+- Protect selected routes with an internal request key (`X-Internal-Key`)
+- Deduplicate in-flight requests (idempotency guard) via middleware
 - Execute recommendation, activity, and feedback workflows
-- Serve location images lazily from PostgreSQL (on-demand)
-- Cache location payloads across RAM and disk
+- Serve location images lazily via disk/PostgreSQL caching
 - Handle user registration, login, and recommendation history
 - Return API-ready JSON responses for the frontend (N16)
 
@@ -24,16 +22,25 @@ app.py
 ## Module Structure
 
 ```
-backend/n8_orchestrator/
-├── app.py       # Flask app init, CORS, blueprint registration
-├── routes.py    # All endpoint definitions and request guards
-├── services.py  # Orchestration logic (recommend, activities, feedback, explore)
-└── utils.py     # JSON parse helpers and error response builders
+backend/n18_orchestrator/
+├── app.py              # FastAPI app init, CORS, middleware registration
+├── config.py           # Configuration values and constants
+├── routes/             # Grouped FastAPI routers
+│   ├── __init__.py     # Main router aggregator
+│   ├── activities.py   # Activity generation & feedback
+│   ├── explore.py      # Slim location listing
+│   ├── general.py      # Health checks, caching endpoints, image serving
+│   ├── locations.py    # Recommendations & feedback
+│   └── profile.py      # User authentication and history
+├── services.py         # Lazy-loaded dependencies and orchestration logic
+├── utils.py            # JSON parse helpers and error response builders
+├── location_cache.json # On-disk cache of location vectors
+└── image_cache/        # On-disk cache for served image chunks
 ```
 
-## Startup: Background Module Warmup
+## Startup: Lazy Module Warmup
 
-On startup, N8 spawns a background daemon thread (`_warmup_modules`) that eagerly imports all heavy dependencies (N1, N2, N3, N4, N5, N6, N17, shared weights). This eliminates the cold-start latency on the first real request. If the warmup thread fails, N8 falls back to lazy-loading via `__getattr__` on the services module.
+Unlike N8 which spawned a background thread, N18 heavily utilizes lazy loading to maintain a blazing fast API boot time. Heavy models (like N1 embeddings) are strictly imported inside the specific service functions that need them. The first request to these endpoints will absorb the initialization latency, while subsequent requests use the warm, cached instances.
 
 ---
 
@@ -45,8 +52,8 @@ On startup, N8 spawns a background daemon thread (`_warmup_modules`) that eagerl
 | `/recommend` | POST | Yes | Full recommendation workflow |
 | `/activities` | POST | No | Generate + rank activities via N5 LLM |
 | `/activities/v2` | POST | No | DB-backed activities from N9–N14 providers |
-| `/locations` | POST | No | Slim location list for Explore mode |
-| `/api/images/<filename>` | GET | No | Lazy-serve location images from PostgreSQL |
+| `/locations` | GET | No | Slim location list for Explore mode |
+| `/api/images/<filename>` | GET | No | Lazy-serve location images |
 | `/cache/reset` | POST | Yes | Force cache refresh from N3 |
 | `/cache/fingerprint` | GET | Yes | Return current DB version fingerprint |
 | `/feedback/recommend` | POST | Yes | Refine recommendation with user feedback |
@@ -68,11 +75,11 @@ Protected routes require the header:
 X-Internal-Key: <secret>
 ```
 
-Requests missing or supplying an incorrect key are rejected with `401`.
+Requests missing or supplying an incorrect key are rejected with `401 Unauthorized`.
 
 ### Idempotency Guard
 
-For `POST` requests to `/recommend`, `/activities`, and `/activities/v2`, N8 computes a SHA-256 fingerprint of `{path}:{sorted JSON body}`. If an identical request is already in flight, the duplicate is rejected with `409 Conflict`. This prevents double-submissions from the frontend during slow AI calls.
+For `POST` requests, N18 computes a SHA-256 fingerprint of `{path}:{sorted JSON body}` via FastAPI middleware. If an identical request is already in flight, the duplicate is rejected with `409 Conflict`. This prevents double-submissions from the frontend during slow AI calls.
 
 Excluded from deduplication: `/cache/reset`, `/feedback/recommend`, `/feedback/activities`.
 
@@ -149,8 +156,9 @@ Pattern is identical for both feedback endpoints:
 
 1. Receive original `text`, `tags`, `img_desc` + new `feedback` string
 2. Call **N17** to refine the input parameters (`refined_text`, `refined_tags`, `refined_img_desc`)
-3. Re-run the corresponding main workflow with refined inputs
-4. Attach a `refined` object to the response so the frontend can show what changed
+3. If N17 detects invalid/spam feedback, it returns empties and N18 short-circuits, returning a `"status": "unchanged"` payload to the frontend.
+4. Otherwise, re-run the corresponding main workflow with refined inputs
+5. Attach a `refined` object to the response so the frontend can show what changed
 
 ---
 
@@ -166,24 +174,24 @@ Returns a slim location list for the `/explore` page in N16:
 
 ## Image Serving (`/api/images/<filename>`)
 
-Images are served lazily: the frontend receives only URL strings in `/recommend` and `/locations` responses, then the browser fetches each image independently as it scrolls into view.
+Images are served lazily: the frontend receives only URL strings in `/recommend` and `/locations` responses, then the browser fetches each image independently.
 
 - Filename format: `{location_id}_{index}.jpg`
-- Images are fetched directly from PostgreSQL via `N3.get_location_image_by_index()`
-- If no image exists for the requested index, a 1×1 transparent PNG is returned (no broken image icons)
+- Images are retrieved from PostgreSQL via `N3` and stored persistently in `image_cache/`
+- FastAPI's `FileResponse` serves them directly from disk on subsequent requests.
 - Successful responses carry `Cache-Control: public, max-age=86400` for browser caching
 
 ---
 
 ## Caching Behavior
 
-N8 maintains a hybrid three-tier cache for location data:
+N18 maintains a hybrid three-tier cache for location data:
 
-1. **RAM cache** — `_CACHED_LOCATIONS_DATA` / `_CACHED_FINGERPRINT` (fastest)
+1. **RAM cache** (fastest)
 2. **Disk cache** — `location_cache.json` alongside `services.py` (survives restarts)
 3. **Fingerprint TTL** — fingerprint is refreshed at most every 10 seconds to reduce DB round-trips
 
-Cache validity is checked by comparing the stored fingerprint against `N3.get_db_fingerprint()`. A mismatch triggers a fresh `get_all_locations(include_images=False)` call and updates both RAM and disk. Images are never stored in the JSON cache — they are served lazily from PostgreSQL.
+Cache validity is checked by comparing the stored fingerprint against `N3.get_db_fingerprint()`. A mismatch triggers a fresh location pull and updates both RAM and disk.
 
 ---
 
@@ -202,8 +210,7 @@ Cache validity is checked by comparing the stored fingerprint against `N3.get_db
 
 ## Runtime Notes
 
-- The Flask app enables CORS for origins defined in project configuration
-- Routes are registered via a `Blueprint` (`n8_routes`)
-- Request timing is logged for every route via `@bp.after_request`
-- The internal key, allowed origins, host, port, and debug flag are all loaded from `config`
-- Module logging uses the project-wide `setup_logging("N8.*")` helper
+- The FastAPI app natively utilizes async routing.
+- The internal key, allowed origins, host, port, and debug flag are all loaded from `config`.
+- Module logging uses the project-wide `setup_logging("N18.*")` helper.
+- `uvicorn` is used as the ASGI web server.
