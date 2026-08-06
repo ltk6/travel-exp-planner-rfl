@@ -1,0 +1,328 @@
+<frozen runpy>:128: RuntimeWarning: 'backend.n18_orchestrator.app' found in sys.modules after import of package 'backend.n18_orchestrator', but prior to execution of 'backend.n18_orchestrator.app'; this may result in unpredictable behaviour
+22:59:41 [INFO] N18 [app.py:196] ONCE PER RUN | Git Commit: 755587e | Hardware: CPU=16, RAM=15.6GB, Env=local
+[INFO] N3: users, history and app_feedback tables successfully initialized (drop_existing=False)
+22:59:42 [INFO] N18 [app.py:206] N18 — Starting on http://0.0.0.0:8000 (debug=False)
+INFO:     Started server process [27264]
+INFO:     Waiting for application startup.
+22:59:43 [INFO] N18 [app.py:49] Pre-loading N1 embedding models...
+[INFO] N1.embedder: N1 — Initializing Embedding Engine (Model: BAAI/bge-m3)...
+[INFO] N1.embedder: N1 — Loading weights onto cpu (this may take a few seconds)...
+[INFO] sentence_transformers.SentenceTransformer: Load pretrained SentenceTransformer: BAAI/bge-m3
+[INFO] N1.embedder: N1 — Embedding Model ready on cpu
+[INFO] N1.embedder: N1 — Initializing Light Embedding Engine (Model: intfloat/multilingual-e5-small)...
+[INFO] N1.embedder: N1 — Loading weights onto cpu (this may take a few seconds)...
+[INFO] sentence_transformers.SentenceTransformer: Load pretrained SentenceTransformer: intfloat/multilingual-e5-small
+[INFO] N1.embedder: N1 — Light Embedding Model ready on cpu
+23:00:37 [INFO] N18 [app.py:55] N1 embedding models pre-loaded successfully.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+23:00:42 [INFO] N18 [app.py:170] [f0103900] ORCHESTRATOR | req_id=f0103900 mode=unknown status=ok total_ms=1 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:59261 - "GET /health HTTP/1.1" 200 OK
+23:01:29 [INFO] N18 [app.py:170] [b1ab6021] ORCHESTRATOR | req_id=b1ab6021 mode=unknown status=ok total_ms=1 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52451 - "GET /health HTTP/1.1" 200 OK
+23:01:29 [INFO] N18 [app.py:170] [ee2f716b] ORCHESTRATOR | req_id=ee2f716b mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52452 - "GET /health HTTP/1.1" 200 OK
+23:01:29 [INFO] N18 [app.py:170] [a25c8721] ORCHESTRATOR | req_id=a25c8721 mode=unknown status=ok total_ms=1 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52453 - "GET /health HTTP/1.1" 200 OK
+23:01:29 [INFO] N18 [app.py:170] [1a7a0b53] ORCHESTRATOR | req_id=1a7a0b53 mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52454 - "GET /health HTTP/1.1" 200 OK
+23:01:29 [INFO] N18 [app.py:170] [3bb4fbb9] ORCHESTRATOR | req_id=3bb4fbb9 mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52455 - "GET /health HTTP/1.1" 200 OK
+23:01:31 [INFO] N18 [app.py:170] [82a732ac] ORCHESTRATOR | req_id=82a732ac mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52456 - "GET /health/deep HTTP/1.1" 200 OK
+23:01:31 [INFO] N18 [app.py:170] [daea575b] ORCHESTRATOR | req_id=daea575b mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52457 - "GET /health/deep HTTP/1.1" 200 OK
+23:01:31 [INFO] N18 [app.py:170] [395d0f4c] ORCHESTRATOR | req_id=395d0f4c mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52458 - "GET /health/deep HTTP/1.1" 200 OK
+23:01:31 [INFO] N18 [app.py:170] [743fb49b] ORCHESTRATOR | req_id=743fb49b mode=unknown status=ok total_ms=1 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52459 - "GET /health/deep HTTP/1.1" 200 OK
+23:01:31 [INFO] N18 [app.py:170] [450e6a47] ORCHESTRATOR | req_id=450e6a47 mode=unknown status=ok total_ms=0 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52460 - "GET /health/deep HTTP/1.1" 200 OK
+23:01:36 [INFO] N18.services [services.py:135] [7bdcd60e] Cache Hit (Disk): loaded 315 locations
+23:01:36 [INFO] N18 [app.py:170] [7bdcd60e] ORCHESTRATOR | req_id=7bdcd60e mode=empty status=ok total_ms=1779 concurrency=0 cpu_s=0.469 ram_delta_mb=31.9 stages_pct={}
+INFO:     127.0.0.1:52461 - "POST /explore HTTP/1.1" 200 OK
+23:01:36 [INFO] N18 [app.py:170] [f32e663f] ORCHESTRATOR | req_id=f32e663f mode=empty status=ok total_ms=2 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52463 - "POST /explore HTTP/1.1" 200 OK
+23:01:36 [INFO] N18 [app.py:170] [9aa12a0b] ORCHESTRATOR | req_id=9aa12a0b mode=empty status=ok total_ms=1 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52464 - "POST /explore HTTP/1.1" 200 OK
+23:01:36 [INFO] N18 [app.py:170] [268411b8] ORCHESTRATOR | req_id=268411b8 mode=empty status=ok total_ms=1 concurrency=0 cpu_s=0.000 ram_delta_mb=0.0 stages_pct={}
+INFO:     127.0.0.1:52465 - "POST /explore HTTP/1.1" 200 OK
+23:01:36 [INFO] N18 [app.py:170] [07a12805] ORCHESTRATOR | req_id=07a12805 mode=empty status=ok total_ms=3 concurrency=0 cpu_s=0.000 ram_delta_mb=0.1 stages_pct={}
+INFO:     127.0.0.1:52466 - "POST /explore HTTP/1.1" 200 OK
+23:01:38 [INFO] N18.recommend [locations.py:41] [30f5df7d] N18 — Starting recommendation flow (text='I want to explore nice cafes and local food. (Variant 0)', tags=[])
+23:01:38 [INFO] N18.recommend [locations.py:67] [30f5df7d] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [30f5df7d] module=N1 op=embed_batch duration_ms=668 status=ok count=1 dims=1024
+23:01:39 [INFO] N18.recommend [locations.py:86] [30f5df7d] N18 — Retrieved 315 location candidates from N3 cache.
+23:01:39 [INFO] N18.recommend [locations.py:89] [30f5df7d] N18 — Ranking via N4 (text_k=3, tags_k=0)...
+[INFO] N4: [30f5df7d] module=N4 op=rank_locations duration_ms=59 status=ok in_count=315 out_count=3
+23:01:39 [INFO] N18.recommend [locations.py:114] [30f5df7d] N18 — Top match: 'loc_019' (score=0.8003)
+23:01:39 [INFO] N18 [app.py:170] [30f5df7d] ORCHESTRATOR | req_id=30f5df7d mode=dense status=ok total_ms=735 concurrency=0 cpu_s=4.859 ram_delta_mb=1171.5 stages_pct={"N1": 91.2, "N3": 0.0, "N4": 8.0}
+INFO:     127.0.0.1:52467 - "POST /locations HTTP/1.1" 200 OK
+23:01:39 [INFO] N18.recommend [locations.py:41] [0f57531a] N18 — Starting recommendation flow (text='Looking for adventurous outdoor activities and trekking. (Variant 1)', tags=[])
+23:01:39 [INFO] N18.recommend [locations.py:67] [0f57531a] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [0f57531a] module=N1 op=embed_batch duration_ms=262 status=ok count=1 dims=1024
+23:01:39 [INFO] N18.recommend [locations.py:86] [0f57531a] N18 — Retrieved 315 location candidates from N3 cache.
+23:01:39 [INFO] N18.recommend [locations.py:89] [0f57531a] N18 — Ranking via N4 (text_k=1, tags_k=0)...
+[INFO] N4: [0f57531a] module=N4 op=rank_locations duration_ms=86 status=ok in_count=315 out_count=3
+23:01:39 [INFO] N18.recommend [locations.py:114] [0f57531a] N18 — Top match: 'loc_026' (score=0.8348)
+23:01:39 [INFO] N18 [app.py:170] [0f57531a] ORCHESTRATOR | req_id=0f57531a mode=dense status=ok total_ms=351 concurrency=0 cpu_s=1.922 ram_delta_mb=0.2 stages_pct={"N1": 74.6, "N3": 0.0, "N4": 24.5}
+INFO:     127.0.0.1:52468 - "POST /locations HTTP/1.1" 200 OK
+23:01:39 [INFO] N18.recommend [locations.py:41] [e117898d] N18 — Starting recommendation flow (text='Best spots for photography and scenic views. (Variant 2)', tags=[])
+23:01:39 [INFO] N18.recommend [locations.py:67] [e117898d] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [e117898d] module=N1 op=embed_batch duration_ms=352 status=ok count=1 dims=1024
+23:01:40 [INFO] N18.recommend [locations.py:86] [e117898d] N18 — Retrieved 315 location candidates from N3 cache.
+23:01:40 [INFO] N18.recommend [locations.py:89] [e117898d] N18 — Ranking via N4 (text_k=2, tags_k=0)...
+[INFO] N4: [e117898d] module=N4 op=rank_locations duration_ms=80 status=ok in_count=315 out_count=3
+23:01:40 [INFO] N18.recommend [locations.py:114] [e117898d] N18 — Top match: 'loc_027' (score=0.8188)
+23:01:40 [INFO] N18 [app.py:170] [e117898d] ORCHESTRATOR | req_id=e117898d mode=dense status=ok total_ms=436 concurrency=0 cpu_s=2.219 ram_delta_mb=3.1 stages_pct={"N1": 80.7, "N3": 0.0, "N4": 18.6}
+INFO:     127.0.0.1:52469 - "POST /locations HTTP/1.1" 200 OK
+23:01:40 [INFO] N18.recommend [locations.py:41] [8f4f7d61] N18 — Starting recommendation flow (text='I want to explore nice cafes and local food. (Variant 3)', tags=[])
+23:01:40 [INFO] N18.recommend [locations.py:67] [8f4f7d61] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [8f4f7d61] module=N1 op=embed_batch duration_ms=354 status=ok count=1 dims=1024
+23:01:40 [INFO] N18.recommend [locations.py:86] [8f4f7d61] N18 — Retrieved 315 location candidates from N3 cache.
+23:01:40 [INFO] N18.recommend [locations.py:89] [8f4f7d61] N18 — Ranking via N4 (text_k=3, tags_k=0)...
+[INFO] N4: [8f4f7d61] module=N4 op=rank_locations duration_ms=87 status=ok in_count=315 out_count=3
+23:01:40 [INFO] N18.recommend [locations.py:114] [8f4f7d61] N18 — Top match: 'loc_027' (score=0.8019)
+23:01:40 [INFO] N18 [app.py:170] [8f4f7d61] ORCHESTRATOR | req_id=8f4f7d61 mode=dense status=ok total_ms=444 concurrency=0 cpu_s=2.734 ram_delta_mb=-0.9 stages_pct={"N1": 79.7, "N3": 0.0, "N4": 19.8}
+INFO:     127.0.0.1:52470 - "POST /locations HTTP/1.1" 200 OK
+23:01:40 [INFO] N18.recommend [locations.py:41] [87de37e9] N18 — Starting recommendation flow (text='Where can I find historical sites and cultural experiences? (Variant 4)', tags=[])
+23:01:40 [INFO] N18.recommend [locations.py:67] [87de37e9] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [87de37e9] module=N1 op=embed_batch duration_ms=313 status=ok count=1 dims=1024
+23:01:40 [INFO] N18.recommend [locations.py:86] [87de37e9] N18 — Retrieved 315 location candidates from N3 cache.
+23:01:40 [INFO] N18.recommend [locations.py:89] [87de37e9] N18 — Ranking via N4 (text_k=2, tags_k=0)...
+[INFO] N4: [87de37e9] module=N4 op=rank_locations duration_ms=90 status=ok in_count=315 out_count=3
+23:01:41 [INFO] N18.recommend [locations.py:114] [87de37e9] N18 — Top match: 'loc_255' (score=0.7924)
+23:01:41 [INFO] N18 [app.py:170] [87de37e9] ORCHESTRATOR | req_id=87de37e9 mode=dense status=ok total_ms=406 concurrency=0 cpu_s=2.547 ram_delta_mb=0.6 stages_pct={"N1": 77.3, "N3": 0.0, "N4": 22.2}
+INFO:     127.0.0.1:52471 - "POST /locations HTTP/1.1" 200 OK
+23:01:41 [INFO] N18.activities [activities.py:69] [b1566eb1] N18 — Embedding user query via N1 Light...
+[INFO] N1: [b1566eb1] module=N1 op=light_embed_batch duration_ms=199 status=ok count=1 dims=384
+[INFO] N5: [b1566eb1] Trying Groq model=llama-3.3-70b-versatile
+[INFO] N5: [b1566eb1] module=N5 op=generate duration_ms=4116 status=ok in_count=1 out_count=10 tokens=3036
+23:01:46 [INFO] N18.activities [activities.py:103] [b1566eb1] N18 — Embedding 10 activities via N1 Light...
+[INFO] N1: [b1566eb1] module=N1 op=light_embed_batch duration_ms=1057 status=ok count=10 dims=384
+[INFO] N6: [b1566eb1] module=N6 op=rank_activities duration_ms=0 status=ok in_count=10 out_count=3
+23:01:47 [INFO] N18 [app.py:170] [b1566eb1] ORCHESTRATOR | req_id=b1566eb1 mode=hybrid status=ok total_ms=5377 concurrency=0 cpu_s=10.109 ram_delta_mb=238.1 stages_pct={"N1_light_query": 3.7, "N5": 76.6, "N1_light_batch": 19.7, "N6": 0.0}
+INFO:     127.0.0.1:52472 - "POST /activities HTTP/1.1" 200 OK
+23:01:47 [INFO] N18.activities [activities.py:69] [44bad3e8] N18 — Embedding user query via N1 Light...
+[INFO] N1: [44bad3e8] module=N1 op=light_embed_batch duration_ms=42 status=ok count=1 dims=384
+[INFO] N5: [44bad3e8] Trying Groq model=llama-3.3-70b-versatile
+[INFO] N5: [44bad3e8] module=N5 op=generate duration_ms=4277 status=ok in_count=1 out_count=10 tokens=3071
+23:01:51 [INFO] N18.activities [activities.py:103] [44bad3e8] N18 — Embedding 10 activities via N1 Light...
+[INFO] N1: [44bad3e8] module=N1 op=light_embed_batch duration_ms=1237 status=ok count=10 dims=384
+[INFO] N6: [44bad3e8] module=N6 op=rank_activities duration_ms=1 status=ok in_count=10 out_count=3
+23:01:52 [INFO] N18 [app.py:170] [44bad3e8] ORCHESTRATOR | req_id=44bad3e8 mode=hybrid status=ok total_ms=5559 concurrency=0 cpu_s=12.672 ram_delta_mb=32.0 stages_pct={"N1_light_query": 0.8, "N5": 76.9, "N1_light_batch": 22.3, "N6": 0.0}
+INFO:     127.0.0.1:52474 - "POST /activities HTTP/1.1" 200 OK
+23:01:52 [INFO] N18.activities [activities.py:69] [2dccc35a] N18 — Embedding user query via N1 Light...
+[INFO] N1: [2dccc35a] module=N1 op=light_embed_batch duration_ms=44 status=ok count=1 dims=384
+[INFO] N5: [2dccc35a] Trying Groq model=llama-3.3-70b-versatile
+[WARNING] N5: [2dccc35a] Model llama-3.3-70b-versatile failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [2dccc35a] Trying Groq model=qwen/qwen3.6-27b
+[WARNING] N5: [2dccc35a] module=N5 op=generate_for_location status=error error_type=parse_failed location=Đỉnh Langbiang Đà Lạt
+[INFO] N5: [2dccc35a] module=N5 op=generate duration_ms=8465 status=ok in_count=1 out_count=0 tokens=5378
+23:02:01 [INFO] N18.activities [activities.py:103] [2dccc35a] N18 — Embedding 0 activities via N1 Light...
+[INFO] N6: [2dccc35a] module=N6 op=rank_activities status=ok msg="skipping ranking (0 activities or top_k <= 0)"
+23:02:01 [INFO] N18 [app.py:170] [2dccc35a] ORCHESTRATOR | req_id=2dccc35a mode=hybrid status=ok total_ms=8510 concurrency=0 cpu_s=0.266 ram_delta_mb=0.2 stages_pct={"N1_light_query": 0.5, "N5": 99.5, "N1_light_batch": 0.0, "N6": 0.0}
+INFO:     127.0.0.1:52476 - "POST /activities HTTP/1.1" 200 OK
+23:02:01 [INFO] N18.activities [activities.py:69] [28582fb6] N18 — Embedding user query via N1 Light...
+[INFO] N1: [28582fb6] module=N1 op=light_embed_batch duration_ms=63 status=ok count=1 dims=384
+[INFO] N5: [28582fb6] Trying Groq model=llama-3.3-70b-versatile
+[WARNING] N5: [28582fb6] Model llama-3.3-70b-versatile failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [28582fb6] Trying Groq model=qwen/qwen3.6-27b
+[WARNING] N5: [28582fb6] Model qwen/qwen3.6-27b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [28582fb6] Trying Groq model=llama-3.1-8b-instant
+[INFO] N5: [28582fb6] module=N5 op=generate duration_ms=2817 status=ok in_count=1 out_count=11 tokens=3182
+23:02:04 [INFO] N18.activities [activities.py:103] [28582fb6] N18 — Embedding 11 activities via N1 Light...
+[INFO] N1: [28582fb6] module=N1 op=light_embed_batch duration_ms=869 status=ok count=11 dims=384
+[INFO] N6: [28582fb6] module=N6 op=rank_activities duration_ms=15 status=ok in_count=11 out_count=3
+23:02:05 [INFO] N18 [app.py:170] [28582fb6] ORCHESTRATOR | req_id=28582fb6 mode=hybrid status=ok total_ms=3767 concurrency=0 cpu_s=8.484 ram_delta_mb=-59.7 stages_pct={"N1_light_query": 1.7, "N5": 74.8, "N1_light_batch": 23.1, "N6": 0.4}
+INFO:     127.0.0.1:51390 - "POST /activities HTTP/1.1" 200 OK
+23:02:05 [INFO] N18.activities [activities.py:69] [2729e904] N18 — Embedding user query via N1 Light...
+[INFO] N1: [2729e904] module=N1 op=light_embed_batch duration_ms=55 status=ok count=1 dims=384
+[INFO] N5: [2729e904] Trying Groq model=llama-3.3-70b-versatile
+[WARNING] N5: [2729e904] Model llama-3.3-70b-versatile failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [2729e904] Trying Groq model=qwen/qwen3.6-27b
+[WARNING] N5: [2729e904] Model qwen/qwen3.6-27b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [2729e904] Trying Groq model=llama-3.1-8b-instant
+[WARNING] N5: [2729e904] Model llama-3.1-8b-instant failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [2729e904] Trying Groq model=openai/gpt-oss-120b
+[INFO] N5: [2729e904] module=N5 op=generate duration_ms=9945 status=ok in_count=1 out_count=3 tokens=5523
+23:02:15 [INFO] N18.activities [activities.py:103] [2729e904] N18 — Embedding 3 activities via N1 Light...
+[INFO] N1: [2729e904] module=N1 op=light_embed_batch duration_ms=384 status=ok count=3 dims=384
+[INFO] N6: [2729e904] module=N6 op=rank_activities duration_ms=0 status=ok in_count=3 out_count=3
+23:02:15 [INFO] N18 [app.py:170] [2729e904] ORCHESTRATOR | req_id=2729e904 mode=hybrid status=ok total_ms=10385 concurrency=0 cpu_s=3.562 ram_delta_mb=-54.7 stages_pct={"N1_light_query": 0.5, "N5": 95.8, "N1_light_batch": 3.7, "N6": 0.0}
+INFO:     127.0.0.1:51394 - "POST /activities HTTP/1.1" 200 OK
+23:02:16 [INFO] N18.recommend [locations.py:162] [34bff781] N18 (N17) — Processing recommend feedback: 'Make it cheaper. (Variant 0)'
+[INFO] N17: [34bff781] module=N17 op=process_feedback duration_ms=866 status=ok in_chars=28 out_chars=72 tokens=1688
+23:02:16 [INFO] N18.recommend [locations.py:192] [34bff781] N18 (N17) — Refined. text='Khám phá hoạt động ngoài trời mạo hiểm và trekking với chi phí tiết kiệm', tags=['adventure', 'trekking', 'budget', 'off the beaten path', 'peaceful']
+23:02:16 [INFO] N18.recommend [locations.py:41] [34bff781] N18 — Starting recommendation flow (text='Khám phá hoạt động ngoài trời mạo hiểm và trekking với chi phí tiết kiệm', tags=['adventure', 'trekking', 'budget', 'off the beaten path', 'peaceful'])
+23:02:16 [INFO] N18.recommend [locations.py:67] [34bff781] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [34bff781] module=N1 op=embed_batch duration_ms=747 status=ok count=1 dims=1024
+23:02:18 [INFO] N18.recommend [locations.py:86] [34bff781] N18 — Retrieved 315 location candidates from N3 cache.
+23:02:18 [INFO] N18.recommend [locations.py:89] [34bff781] N18 — Ranking via N4 (text_k=5, tags_k=5)...
+[INFO] N4: [34bff781] module=N4 op=rank_locations duration_ms=72 status=ok in_count=315 out_count=3
+23:02:18 [INFO] N18.recommend [locations.py:114] [34bff781] N18 — Top match: 'loc_156' (score=0.8595)
+23:02:18 [INFO] N18 [app.py:170] [34bff781] ORCHESTRATOR | req_id=34bff781 mode=unknown status=ok total_ms=2848 concurrency=0 cpu_s=6.000 ram_delta_mb=-34.8 stages_pct={"N17": 30.4, "N1": 26.3, "N3": 40.6, "N4": 2.6}
+INFO:     127.0.0.1:51399 - "POST /feedback/locations HTTP/1.1" 200 OK
+23:02:18 [INFO] N18.recommend [locations.py:162] [193b0cf3] N18 (N17) — Processing recommend feedback: 'I want something suitable for families. (Variant 1)'
+[INFO] N17: [193b0cf3] module=N17 op=process_feedback duration_ms=797 status=ok in_chars=51 out_chars=73 tokens=1686
+23:02:19 [INFO] N18.recommend [locations.py:192] [193b0cf3] N18 (N17) — Refined. text='Khám phá các địa điểm lịch sử và trải nghiệm văn hóa phù hợp với gia đình', tags=['family', 'cultural show', 'peaceful', 'local cuisine']
+23:02:19 [INFO] N18.recommend [locations.py:41] [193b0cf3] N18 — Starting recommendation flow (text='Khám phá các địa điểm lịch sử và trải nghiệm văn hóa phù hợp với gia đình', tags=['family', 'cultural show', 'peaceful', 'local cuisine'])
+23:02:19 [INFO] N18.recommend [locations.py:67] [193b0cf3] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [193b0cf3] module=N1 op=embed_batch duration_ms=1127 status=ok count=1 dims=1024
+23:02:20 [INFO] N18.recommend [locations.py:86] [193b0cf3] N18 — Retrieved 315 location candidates from N3 cache.
+23:02:20 [INFO] N18.recommend [locations.py:89] [193b0cf3] N18 — Ranking via N4 (text_k=8, tags_k=4)...
+[INFO] N4: [193b0cf3] module=N4 op=rank_locations duration_ms=166 status=ok in_count=315 out_count=3
+23:02:20 [INFO] N18.recommend [locations.py:114] [193b0cf3] N18 — Top match: 'loc_237' (score=0.8457)
+23:02:20 [INFO] N18 [app.py:170] [193b0cf3] ORCHESTRATOR | req_id=193b0cf3 mode=unknown status=ok total_ms=2092 concurrency=0 cpu_s=9.641 ram_delta_mb=21.5 stages_pct={"N17": 38.1, "N1": 53.9, "N3": 0.0, "N4": 7.9}
+INFO:     127.0.0.1:51402 - "POST /feedback/locations HTTP/1.1" 200 OK
+23:02:20 [INFO] N18.recommend [locations.py:162] [bed5f92b] N18 (N17) — Processing recommend feedback: 'Can we make it more adventurous? (Variant 2)'
+[ERROR] N17: [bed5f92b] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Used 9443, Requested 3132. Please try again in 2.875s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [bed5f92b] Model groq_70b failed in pass 1
+[ERROR] N17: [bed5f92b] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5307, Requested 3527. Please try again in 6.255s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [bed5f92b] Model groq_qwen3_6 failed in pass 1
+[INFO] N17: [bed5f92b] module=N17 op=process_feedback duration_ms=1167 status=ok in_chars=44 out_chars=103 tokens=1716
+23:02:22 [INFO] N18.recommend [locations.py:192] [bed5f92b] N18 (N17) — Refined. text='Du lịch biển hoang sơ, yên bình, bãi biển vắng vẻ, không gian thư giãn tĩnh lặng, nghỉ dưỡng nhẹ nhàng.', tags=['resort', 'peaceful']
+23:02:22 [INFO] N18.recommend [locations.py:41] [bed5f92b] N18 — Starting recommendation flow (text='Du lịch biển hoang sơ, yên bình, bãi biển vắng vẻ, không gian thư giãn tĩnh lặng, nghỉ dưỡng nhẹ nhàng.', tags=['resort', 'peaceful'])
+23:02:22 [INFO] N18.recommend [locations.py:67] [bed5f92b] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [bed5f92b] module=N1 op=embed_batch duration_ms=1041 status=ok count=1 dims=1024
+23:02:23 [INFO] N18.recommend [locations.py:86] [bed5f92b] N18 — Retrieved 315 location candidates from N3 cache.
+23:02:23 [INFO] N18.recommend [locations.py:89] [bed5f92b] N18 — Ranking via N4 (text_k=6, tags_k=2)...
+[INFO] N4: [bed5f92b] module=N4 op=rank_locations duration_ms=152 status=ok in_count=315 out_count=3
+23:02:23 [INFO] N18.recommend [locations.py:114] [bed5f92b] N18 — Top match: 'loc_160' (score=0.8849)
+23:02:23 [INFO] N18 [app.py:170] [bed5f92b] ORCHESTRATOR | req_id=bed5f92b mode=unknown status=ok total_ms=2362 concurrency=0 cpu_s=9.484 ram_delta_mb=3.8 stages_pct={"N17": 49.4, "N1": 44.1, "N3": 0.0, "N4": 6.4}
+INFO:     127.0.0.1:51404 - "POST /feedback/locations HTTP/1.1" 200 OK
+23:02:23 [INFO] N18.recommend [locations.py:162] [be6df21e] N18 (N17) — Processing recommend feedback: 'Can we make it more adventurous? (Variant 3)'
+[ERROR] N17: [be6df21e] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Used 8963, Requested 3185. Please try again in 740ms. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [be6df21e] Model groq_70b failed in pass 1
+[ERROR] N17: [be6df21e] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4986, Requested 3527. Please try again in 3.8475s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [be6df21e] Model groq_qwen3_6 failed in pass 1
+[ERROR] N17: [be6df21e] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 5715, Requested 3280. Please try again in 29.95s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [be6df21e] Model groq_8b failed in pass 1
+[ERROR] N17: [be6df21e] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6744, Requested 1610. Please try again in 2.655s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [be6df21e] Model groq_gpt_oss_120b failed in pass 1
+[INFO] N17: [be6df21e] module=N17 op=process_feedback duration_ms=2764 status=ok in_chars=44 out_chars=51 tokens=2529
+23:02:26 [INFO] N18.recommend [locations.py:192] [be6df21e] N18 (N17) — Refined. text='Adventurous weekend trip with thrilling activities.', tags=['adventure', 'trekking', 'canyoning', 'weekend trip', 'wild', 'off the beaten path']
+23:02:26 [INFO] N18.recommend [locations.py:41] [be6df21e] N18 — Starting recommendation flow (text='Adventurous weekend trip with thrilling activities.', tags=['adventure', 'trekking', 'canyoning', 'weekend trip', 'wild', 'off the beaten path'])
+23:02:26 [INFO] N18.recommend [locations.py:67] [be6df21e] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [be6df21e] module=N1 op=embed_batch duration_ms=591 status=ok count=1 dims=1024
+23:02:26 [INFO] N18.recommend [locations.py:86] [be6df21e] N18 — Retrieved 315 location candidates from N3 cache.
+23:02:26 [INFO] N18.recommend [locations.py:89] [be6df21e] N18 — Ranking via N4 (text_k=2, tags_k=6)...
+[INFO] N4: [be6df21e] module=N4 op=rank_locations duration_ms=127 status=ok in_count=315 out_count=3
+23:02:26 [INFO] N18.recommend [locations.py:114] [be6df21e] N18 — Top match: 'loc_135' (score=0.8674)
+23:02:26 [INFO] N18 [app.py:170] [be6df21e] ORCHESTRATOR | req_id=be6df21e mode=unknown status=ok total_ms=3484 concurrency=0 cpu_s=4.438 ram_delta_mb=-29.2 stages_pct={"N17": 79.3, "N1": 17.0, "N3": 0.0, "N4": 3.6}
+INFO:     127.0.0.1:51408 - "POST /feedback/locations HTTP/1.1" 200 OK
+23:02:26 [INFO] N18.recommend [locations.py:162] [885eed32] N18 (N17) — Processing recommend feedback: 'I want something suitable for families. (Variant 4)'
+[INFO] N17: [885eed32] module=N17 op=process_feedback duration_ms=914 status=ok in_chars=51 out_chars=71 tokens=1702
+23:02:27 [INFO] N18.recommend [locations.py:192] [885eed32] N18 (N17) — Refined. text='Địa điểm thư giãn cho chuyến đi cuối tuần yên bình phù hợp với gia đình', tags=['peaceful', 'family', 'weekend trip', 'resort']
+23:02:27 [INFO] N18.recommend [locations.py:41] [885eed32] N18 — Starting recommendation flow (text='Địa điểm thư giãn cho chuyến đi cuối tuần yên bình phù hợp với gia đình', tags=['peaceful', 'family', 'weekend trip', 'resort'])
+23:02:27 [INFO] N18.recommend [locations.py:67] [885eed32] N18 — Embedding user query via N1 (BGE-M3)...
+[INFO] N1: [885eed32] module=N1 op=embed_batch duration_ms=782 status=ok count=1 dims=1024
+23:02:29 [INFO] N18.recommend [locations.py:86] [885eed32] N18 — Retrieved 315 location candidates from N3 cache.
+23:02:29 [INFO] N18.recommend [locations.py:89] [885eed32] N18 — Ranking via N4 (text_k=4, tags_k=4)...
+[INFO] N4: [885eed32] module=N4 op=rank_locations duration_ms=143 status=ok in_count=315 out_count=3
+23:02:29 [INFO] N18.recommend [locations.py:114] [885eed32] N18 — Top match: 'loc_188' (score=0.8770)
+23:02:29 [INFO] N18 [app.py:170] [885eed32] ORCHESTRATOR | req_id=885eed32 mode=unknown status=ok total_ms=2950 concurrency=0 cpu_s=6.500 ram_delta_mb=9.8 stages_pct={"N17": 31.0, "N1": 26.5, "N3": 37.6, "N4": 4.8}
+INFO:     127.0.0.1:51414 - "POST /feedback/locations HTTP/1.1" 200 OK
+23:02:30 [INFO] N18.activities [activities.py:155] [c55e5ae2] N17 — Processing activity feedback: 'Actually, I prefer indoor activities. (Variant 0)'
+[INFO] N17: [c55e5ae2] module=N17 op=process_feedback duration_ms=1167 status=ok in_chars=49 out_chars=50 tokens=1693
+23:02:31 [INFO] N18.activities [activities.py:69] [c55e5ae2] N18 — Embedding user query via N1 Light...
+[INFO] N1: [c55e5ae2] module=N1 op=light_embed_batch duration_ms=102 status=ok count=1 dims=384
+[INFO] N5: [c55e5ae2] Trying Groq model=llama-3.3-70b-versatile
+[WARNING] N5: [c55e5ae2] Model llama-3.3-70b-versatile failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [c55e5ae2] Trying Groq model=qwen/qwen3.6-27b
+[WARNING] N5: [c55e5ae2] Model qwen/qwen3.6-27b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [c55e5ae2] Trying Groq model=llama-3.1-8b-instant
+[WARNING] N5: [c55e5ae2] Model llama-3.1-8b-instant failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [c55e5ae2] Trying Groq model=openai/gpt-oss-120b
+[WARNING] N5: [c55e5ae2] Model openai/gpt-oss-120b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [c55e5ae2] Trying Groq model=openai/gpt-oss-20b
+[INFO] N5: [c55e5ae2] N5 Pass 1 failed for all models. Retrying entire chain in 2.32s...
+[INFO] N5: [c55e5ae2] Trying Groq model=llama-3.3-70b-versatile
+[INFO] N5: [c55e5ae2] module=N5 op=generate duration_ms=12529 status=ok in_count=1 out_count=10 tokens=2952
+23:02:44 [INFO] N18.activities [activities.py:103] [c55e5ae2] N18 — Embedding 10 activities via N1 Light...
+[INFO] N1: [c55e5ae2] module=N1 op=light_embed_batch duration_ms=924 status=ok count=10 dims=384
+[INFO] N6: [c55e5ae2] module=N6 op=rank_activities duration_ms=0 status=ok in_count=10 out_count=3
+23:02:45 [INFO] N18 [app.py:170] [c55e5ae2] ORCHESTRATOR | req_id=c55e5ae2 mode=unknown status=ok total_ms=14730 concurrency=0 cpu_s=9.688 ram_delta_mb=134.1 stages_pct={"N17": 7.9, "N1_light_query": 0.7, "N5": 85.1, "N1_light_batch": 6.3, "N6": 0.0}
+INFO:     127.0.0.1:51417 - "POST /feedback/activities HTTP/1.1" 200 OK
+23:02:45 [INFO] N18.activities [activities.py:155] [4a326af6] N17 — Processing activity feedback: 'Actually, I prefer indoor activities. (Variant 1)'
+[ERROR] N17: [4a326af6] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Used 10971, Requested 3130. Please try again in 10.505s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [4a326af6] Model groq_70b failed in pass 1
+[WARNING] N17: [4a326af6] module=N17 op=process_feedback duration_ms=4641 status=error error_type=fallback_used in_chars=49 out_chars=107 tokens=3525
+23:02:49 [INFO] N18.activities [activities.py:69] [4a326af6] N18 — Embedding user query via N1 Light...
+[INFO] N1: [4a326af6] module=N1 op=light_embed_batch duration_ms=46 status=ok count=1 dims=384
+[INFO] N5: [4a326af6] Trying Groq model=llama-3.3-70b-versatile
+[WARNING] N5: [4a326af6] Model llama-3.3-70b-versatile failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [4a326af6] Trying Groq model=qwen/qwen3.6-27b
+[WARNING] N5: [4a326af6] Model qwen/qwen3.6-27b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [4a326af6] Trying Groq model=llama-3.1-8b-instant
+[INFO] N5: [4a326af6] module=N5 op=generate duration_ms=3059 status=ok in_count=1 out_count=11 tokens=3427
+23:02:52 [INFO] N18.activities [activities.py:103] [4a326af6] N18 — Embedding 11 activities via N1 Light...
+[INFO] N1: [4a326af6] module=N1 op=light_embed_batch duration_ms=1059 status=ok count=11 dims=384
+[INFO] N6: [4a326af6] module=N6 op=rank_activities duration_ms=0 status=ok in_count=11 out_count=3
+23:02:53 [INFO] N18 [app.py:170] [4a326af6] ORCHESTRATOR | req_id=4a326af6 mode=unknown status=ok total_ms=8823 concurrency=0 cpu_s=10.359 ram_delta_mb=32.5 stages_pct={"N17": 52.8, "N1_light_query": 0.5, "N5": 34.7, "N1_light_batch": 12.0, "N6": 0.0}
+INFO:     127.0.0.1:51425 - "POST /feedback/activities HTTP/1.1" 200 OK
+23:02:53 [INFO] N18.activities [activities.py:155] [53e7aa87] N17 — Processing activity feedback: 'Can we make it more adventurous? (Variant 2)'
+[ERROR] N17: [53e7aa87] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Used 9207, Requested 3132. Please try again in 1.695s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [53e7aa87] Model groq_70b failed in pass 1
+[WARNING] N17: [53e7aa87] module=N17 op=process_feedback duration_ms=4670 status=error error_type=fallback_used in_chars=44 out_chars=117 tokens=3527
+23:02:58 [INFO] N18.activities [activities.py:69] [53e7aa87] N18 — Embedding user query via N1 Light...
+[INFO] N1: [53e7aa87] module=N1 op=light_embed_batch duration_ms=57 status=ok count=1 dims=384
+[INFO] N5: [53e7aa87] Trying Groq model=llama-3.3-70b-versatile
+[INFO] N5: [53e7aa87] module=N5 op=generate duration_ms=4008 status=ok in_count=1 out_count=10 tokens=2970
+23:03:02 [INFO] N18.activities [activities.py:103] [53e7aa87] N18 — Embedding 10 activities via N1 Light...
+[INFO] N1: [53e7aa87] module=N1 op=light_embed_batch duration_ms=836 status=ok count=10 dims=384
+[INFO] N6: [53e7aa87] module=N6 op=rank_activities duration_ms=0 status=ok in_count=10 out_count=3
+23:03:03 [INFO] N18 [app.py:170] [53e7aa87] ORCHESTRATOR | req_id=53e7aa87 mode=unknown status=ok total_ms=9573 concurrency=0 cpu_s=8.344 ram_delta_mb=-16.6 stages_pct={"N17": 48.8, "N1_light_query": 0.6, "N5": 41.9, "N1_light_batch": 8.7, "N6": 0.0}
+INFO:     127.0.0.1:51431 - "POST /feedback/activities HTTP/1.1" 200 OK
+23:03:03 [INFO] N18.activities [activities.py:155] [ce651f0f] N17 — Processing activity feedback: 'Make it cheaper. (Variant 3)'
+[ERROR] N17: [ce651f0f] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Used 10262, Requested 3125. Please try again in 6.935s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [ce651f0f] Model groq_70b failed in pass 1
+[ERROR] N17: [ce651f0f] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `qwen/qwen3.6-27b` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6700, Requested 3520. Please try again in 16.65s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [ce651f0f] Model groq_qwen3_6 failed in pass 1
+[ERROR] N17: [ce651f0f] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.1-8b-instant` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 6000, Used 4862, Requested 1555. Please try again in 4.17s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [ce651f0f] Model groq_8b failed in pass 1
+[INFO] N17: [ce651f0f] module=N17 op=process_feedback duration_ms=3149 status=ok in_chars=28 out_chars=87 tokens=2443
+23:03:06 [INFO] N18.activities [activities.py:69] [ce651f0f] N18 — Embedding user query via N1 Light...
+[INFO] N1: [ce651f0f] module=N1 op=light_embed_batch duration_ms=78 status=ok count=1 dims=384
+[INFO] N5: [ce651f0f] Trying Groq model=llama-3.3-70b-versatile
+[WARNING] N5: [ce651f0f] Model llama-3.3-70b-versatile failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [ce651f0f] Trying Groq model=qwen/qwen3.6-27b
+[WARNING] N5: [ce651f0f] Model qwen/qwen3.6-27b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [ce651f0f] Trying Groq model=llama-3.1-8b-instant
+[WARNING] N5: [ce651f0f] Model llama-3.1-8b-instant failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [ce651f0f] Trying Groq model=openai/gpt-oss-120b
+[WARNING] N5: [ce651f0f] Model openai/gpt-oss-120b failed in pass 1 (Retryable: Groq HTTP 429)
+[INFO] N5: [ce651f0f] Trying Groq model=openai/gpt-oss-20b
+[INFO] N5: [ce651f0f] N5 Pass 1 failed for all models. Retrying entire chain in 2.75s...
+[INFO] N5: [ce651f0f] Trying Groq model=llama-3.3-70b-versatile
+[INFO] N5: [ce651f0f] module=N5 op=generate duration_ms=13793 status=ok in_count=1 out_count=10 tokens=3143
+23:03:20 [INFO] N18.activities [activities.py:103] [ce651f0f] N18 — Embedding 10 activities via N1 Light...
+[INFO] N1: [ce651f0f] module=N1 op=light_embed_batch duration_ms=1112 status=ok count=10 dims=384
+[INFO] N6: [ce651f0f] module=N6 op=rank_activities duration_ms=2 status=ok in_count=10 out_count=3
+23:03:21 [INFO] N18 [app.py:170] [ce651f0f] ORCHESTRATOR | req_id=ce651f0f mode=unknown status=ok total_ms=18138 concurrency=0 cpu_s=11.422 ram_delta_mb=8.7 stages_pct={"N17": 17.4, "N1_light_query": 0.4, "N5": 76.0, "N1_light_batch": 6.1, "N6": 0.0}
+INFO:     127.0.0.1:51445 - "POST /feedback/activities HTTP/1.1" 200 OK
+23:03:21 [INFO] N18.activities [activities.py:155] [b8b5fcb3] N17 — Processing activity feedback: 'I want something suitable for families. (Variant 4)'
+[ERROR] N17: [b8b5fcb3] Groq HTTP Error 429: {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01krn1sm95fbyveymj6nafv9bv` service tier `on_demand` on tokens per minute (TPM): Limit 12000, Used 9769, Requested 3249. Please try again in 5.09s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing","type":"tokens","code":"rate_limit_exceeded"}}
+
+[WARNING] N17: [b8b5fcb3] Model groq_70b failed in pass 1
+[INFO] N17: [b8b5fcb3] module=N17 op=process_feedback duration_ms=4768 status=ok in_chars=51 out_chars=78 tokens=3526
+23:03:26 [INFO] N18.activities [activities.py:69] [b8b5fcb3] N18 — Embedding user query via N1 Light...
+[INFO] N1: [b8b5fcb3] module=N1 op=light_embed_batch duration_ms=114 status=ok count=1 dims=384
+[INFO] N5: [b8b5fcb3] Trying Groq model=llama-3.3-70b-versatile
+[INFO] N5: [b8b5fcb3] module=N5 op=generate duration_ms=3293 status=ok in_count=1 out_count=10 tokens=2963
+23:03:29 [INFO] N18.activities [activities.py:103] [b8b5fcb3] N18 — Embedding 10 activities via N1 Light...
+[INFO] N1: [b8b5fcb3] module=N1 op=light_embed_batch duration_ms=922 status=ok count=10 dims=384
+[INFO] N6: [b8b5fcb3] module=N6 op=rank_activities duration_ms=0 status=ok in_count=10 out_count=3
+23:03:30 [INFO] N18 [app.py:170] [b8b5fcb3] ORCHESTRATOR | req_id=b8b5fcb3 mode=unknown status=ok total_ms=9101 concurrency=0 cpu_s=9.062 ram_delta_mb=-3.8 stages_pct={"N17": 52.4, "N1_light_query": 1.3, "N5": 36.2, "N1_light_batch": 10.1, "N6": 0.0}
+INFO:     127.0.0.1:51456 - "POST /feedback/activities HTTP/1.1" 200 OK

@@ -1,12 +1,13 @@
 """
-maps/tags.py
-============
+maps/activity_tags.py (Trimmed-down version of tags.py)
+=====================
 
-Controlled travel ontology for Vietnam destination tagging.
+Controlled travel ontology for Vietnam activity tagging and constraints.
+Designed to focus on highly specific, evocative, and action-oriented activities.
 
-Used by BOTH location profiles and user-intent signals. Both sides map
-into this shared vocabulary; cosine similarity across the shared embedding
-space produces the relevance score fed into N4 ranking.
+Generic activities (such as swimming, shopping, photography, or dining) are omitted
+here because they are already inferred directly from location type or tag attributes,
+ensuring clean semantic vector spaces without redundant matching.
 
 ─────────────────────────────────────────────────────────────
 DESIGN PRINCIPLES
@@ -14,160 +15,10 @@ DESIGN PRINCIPLES
 
 Expansions are written to maximise BGE-M3 retrieval signal:
   • 4–10 tokens of semantically adjacent English travel vocabulary
-  • No mere restatement of the key (e.g. "beach" → "beach coastal" is weak)
   • Prefer evocative, discriminative phrases over generic fillers
-  • Each expansion must pull the vector toward a distinct cluster in the
-    embedding space so that user ↔ location cosine distances are meaningful
-  • No proper nouns (place names, brand names, ethnic-group names) in any
-    expansion — tags describe attributes of "big locations", not specific
-    sites, so a single named place should never anchor a tag's vector
-  • Tag keys must stay broad enough to match multiple destinations; a key
-    that realistically applies to only one site belongs merged into a
-    broader neighbour, not as its own entry
-
-─────────────────────────────────────────────────────────────
-RESERVED KEYS
-─────────────────────────────────────────────────────────────
-
-Keys referenced by frontend/n7_legacy_streamlit_ui (and its questionnaire
-port, questionnaire_data.ts) are reserved and must not be renamed or
-removed — only their expansion text may change.
-
-─────────────────────────────────────────────────────────────
-SECTION INDEX
-─────────────────────────────────────────────────────────────
-
-  A. TERRAIN & LANDSCAPE   — physical geography, natural features
-  B. WATER & COAST         — ocean, rivers, lakes, marine ecosystems
-  C. FLORA & ECOSYSTEMS    — vegetation, protected areas
-  D. CLIMATE & SEASON      — weather windows, temperature zones
-  E. CULTURE & HERITAGE    — history, religion, ethnicity, arts
-  F. URBAN & SETTLEMENT    — city types, neighbourhoods, markets
-  G. ACTIVITIES — LAND     — trekking, cycling, aerial, overland adventure
-  H. ACTIVITIES — WATER    — diving, paddling, boat experiences
-  I. ACTIVITIES — LEISURE  — wellness, classes, soft experiences
-  J. FOOD & DRINK          — cuisine types, dining styles, specialties
-  K. VIBE & MOOD           — atmosphere, aesthetic, emotional tone
-  L. TRIP PROFILE          — duration, pace, group composition
-  M. BUDGET & STYLE        — spend level, accommodation style
-  N. SPECIAL INTEREST      — niche travel segments
+  • Activity tags are trimmed of highly generic/redundant entries
+  • Tag keys must stay broad enough to match multiple destinations
 """
-
-# ──────────────────────────────────────────────────────────────────────────────
-# A. TERRAIN & LANDSCAPE
-# ──────────────────────────────────────────────────────────────────────────────
-
-TERRAIN = {
-    # Specific landmarks/attractions
-    "cave"              : "cave cavern underground stalactite hidden world",
-    "sand dune"         : "sand dune arid golden landscape shifting coastal desert",
-
-    # Agricultural landscape
-    "rice terrace"      : "terraced rice field hillside cultivation harvest scenic",
-    "farm"              : "agricultural farm orchard countryside agro-tourism",
-    "flower field"      : "flower meadow blossom field colourful seasonal bloom",
-    "tea plantation"    : "tea plantation terraced hills green highland harvest",
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# B. WATER & COAST
-# ──────────────────────────────────────────────────────────────────────────────
-
-WATER = {
-    # Coastal & marine
-    "beach"             : "sandy beach sun sea swimming tropical coast",
-    "island"            : "island remote tropical escape surrounded by sea",
-    "archipelago"       : "island chain multiple islands hopping boat sea",
-
-    # Freshwater
-    "waterfall"         : "waterfall cascade vertical drop mist jungle",
-    "hot spring"        : "thermal hot spring mineral soaking natural spa",
-
-    # Marine ecosystems
-    "coral reef"        : "coral reef marine biodiversity underwater colour",
-    "mangrove"          : "mangrove forest coastal ecosystem kayak wildlife",
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# C. FLORA & ECOSYSTEMS
-# ──────────────────────────────────────────────────────────────────────────────
-
-ECOSYSTEM = {
-    "national park"     : "protected national park wildlife forest reserve",
-    "forest"            : "dense jungle rainforest canopy trekking shade",
-    "pine forest"       : "pine forest cool misty highland atmospheric",
-    "bamboo forest"     : "bamboo grove green tranquil walk shade",
-    "biosphere reserve" : "UNESCO biosphere reserve pristine ecology conservation",
-    "nature reserve"    : "wildlife nature reserve conservation endangered species",
-    "birdwatching"      : "birdwatching rare species wetland binoculars nature",
-    "wildlife"          : "wildlife safari animal encounter jungle biodiversity",
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# D. CLIMATE & SEASON
-# ──────────────────────────────────────────────────────────────────────────────
-
-SEASON = {
-    # Temperature zones
-    "cool climate"      : "cool highland climate fresh air escape heat",
-    "tropical"          : "tropical warm sunny year round humid lush",
-    "cold"              : "cold winter frost crisp mountain air sweater",
-
-    # Specific phenomena
-    "snow"              : "snowfall frost winter rare cold highland mountain",
-    "cloud sea"         : "cloud sea fog inversion highland sunrise mystical",
-    "flower season"     : "flower blooming season colourful landscape photography",
-    "harvest season"    : "harvest season golden rice terrace autumn rural beauty",
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# E. CULTURE & HERITAGE
-# ──────────────────────────────────────────────────────────────────────────────
-
-CULTURE = {
-    # Historical eras & sites
-    "history"           : "historical heritage site war ancient dynasty cultural depth",
-    "war history"       : "war battlefield bunker tunnel military history memorial",
-    "colonial heritage" : "colonial architecture villa mansion old quarter",
-    "imperial"          : "imperial citadel royal palace dynastic forbidden city",
-    "prehistoric"       : "prehistoric archaeological ancient cave painting site",
-
-    # Religion & spiritual
-    "temple"            : "temple worship incense spiritual ritual devotion",
-    "pagoda"            : "Buddhist pagoda lotus pond bell tower monk",
-    "church"            : "colonial church cathedral religious architecture",
-    "meditation"        : "meditation retreat mindfulness silent practice inner peace",
-
-    # Ethnic & indigenous
-    "ethnic minority"   : "highland ethnic minority tribe indigenous culture village",
-    "ethnic village"    : "traditional ethnic minority village homestay customs dress",
-    "craft village"     : "traditional craft village artisan pottery lacquer silk weaving",
-
-    # Arts & performance
-    "traditional music" : "traditional music water puppet folk performance",
-    "water puppet"      : "water puppet show traditional theatre folk art performance",
-    "festival"          : "local festival celebration lantern fire flower crowd ceremony",
-    "art"               : "contemporary art gallery creative district exhibition",
-
-    # UNESCO
-    "UNESCO heritage"   : "UNESCO world heritage site globally significant protected",
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# F. URBAN & SETTLEMENT
-# ──────────────────────────────────────────────────────────────────────────────
-
-URBAN = {
-    "city"              : "urban city modern amenities transport nightlife dining",
-    "old town"          : "preserved old town walking heritage narrow alley merchant",
-    "village"           : "rural village slow life community genuine local",
-    "fishing village"   : "fishing village boat dock morning catch coastal life",
-    "market"            : "local market fresh produce commerce noise colour",
-    "night market"      : "night market street food stalls lantern bargain buzz",
-    "floating market"   : "floating market river boat vendor dawn delta",
-    "walking street"    : "pedestrian walking street evening crowd souvenir cafe",
-    "rooftop bar"       : "rooftop bar skyline city view cocktail sunset panorama",
-}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # G. ACTIVITIES — LAND
@@ -376,12 +227,6 @@ SPECIAL_INTEREST = {
 # ──────────────────────────────────────────────────────────────────────────────
 
 ALL_TAGS: dict[str, str] = {
-    **TERRAIN,
-    **WATER,
-    **ECOSYSTEM,
-    **SEASON,
-    **CULTURE,
-    **URBAN,
     **ACTIVITIES_LAND,
     **ACTIVITIES_WATER,
     **ACTIVITIES_LEISURE,

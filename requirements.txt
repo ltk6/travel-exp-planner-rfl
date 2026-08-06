@@ -1,7 +1,7 @@
 # --- Project Global ---
 pydantic>=2.0.2
 python-dotenv
-
+psutil
 # --- Module Recursive Imports ---
 -r backend/modules/n1_embedding/requirements.txt
 -r backend/modules/n2_image_processing/requirements.txt

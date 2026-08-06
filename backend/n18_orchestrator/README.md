@@ -1,197 +1,77 @@
-# N18 Orchestrator Module
+# N18: API Orchestrator
 
-N18 is the primary backend API layer for the project, succeeding the legacy N8 (Flask) orchestrator. Built with FastAPI, it exposes high-performance asynchronous HTTP endpoints, validates protected access, coordinates all AI and data workflows, manages caching for location records and image assets, and handles user authentication and recommendation history.
+`N18` is the primary orchestrator and API gateway layer of the system. Built with FastAPI, it exposes asynchronous HTTP endpoints, enforces security/access headers, manages caching of location records and images, handles user auth session mappings, and coordinates the flow between AI spokes (N1–N17).
 
-## Responsibilities
-
-- Start and configure the FastAPI application
-- Register API routes and apply CORS rules
-- Protect selected routes with an internal request key (`X-Internal-Key`)
-- Deduplicate in-flight requests (idempotency guard) via middleware
-- Execute recommendation, activity, and feedback workflows
-- Serve location images lazily via disk/PostgreSQL caching
-- Handle user registration, login, and recommendation history
-- Return API-ready JSON responses for the frontend (N16)
-
-## Entry Point
-
-```python
-app.py
-```
-
-## Module Structure
-
-```
-backend/n18_orchestrator/
-├── app.py              # FastAPI app init, CORS, middleware registration
-├── config.py           # Configuration values and constants
-├── routes/             # Grouped FastAPI routers
-│   ├── __init__.py     # Main router aggregator
-│   ├── activities.py   # Activity generation & feedback
-│   ├── explore.py      # Slim location listing
-│   ├── general.py      # Health checks, caching endpoints, image serving
-│   ├── locations.py    # Recommendations & feedback
-│   └── profile.py      # User authentication and history
-├── services.py         # Lazy-loaded dependencies and orchestration logic
-├── utils.py            # JSON parse helpers and error response builders
-├── location_cache.json # On-disk cache of location vectors
-└── image_cache/        # On-disk cache for served image chunks
-```
-
-## Startup: Lazy Module Warmup
-
-Unlike N8 which spawned a background thread, N18 heavily utilizes lazy loading to maintain a blazing fast API boot time. Heavy models (like N1 embeddings) are strictly imported inside the specific service functions that need them. The first request to these endpoints will absorb the initialization latency, while subsequent requests use the warm, cached instances.
-
----
-
-## Public Routes
-
-| Endpoint | Method | Auth Required | Description |
-|---|---|---|---|
-| `/health` | GET | No | Service status and runtime info |
-| `/recommend` | POST | Yes | Full recommendation workflow |
-| `/activities` | POST | No | Generate + rank activities via N5 LLM |
-| `/locations` | GET | No | Slim location list for Explore mode |
-| `/api/images/<filename>` | GET | No | Lazy-serve location images |
-| `/cache/reset` | POST | Yes | Force cache refresh from N3 |
-| `/cache/fingerprint` | GET | Yes | Return current DB version fingerprint |
-| `/feedback/locations` | POST | Yes | Refine recommendation with user feedback |
-| `/feedback/activities` | POST | Yes | Refine activity list with user feedback |
-| `/api/auth/register` | POST | No | Register new user account |
-| `/api/auth/login` | POST | No | Log in and return user_id |
-| `/api/profile/history` | POST | Yes | Save a recommendation turn to history |
-| `/api/profile/history/<user_id>` | GET | Yes | Retrieve recommendation history for user |
-
----
-
-## Request Validation
-
-### Authentication
-
-Protected routes require the header:
+## Directory Structure
 
 ```text
-X-Internal-Key: <secret>
+backend/n18_orchestrator/
+├── __init__.py         # Public API exports (app FastAPI instance)
+├── app.py              # Application configuration, CORS, and middleware setup
+├── config.py           # Endpoint ports, allowed origins, and route groupings
+├── routes/             # Grouped API endpoints (locations, activities, profile, general)
+├── services.py         # Lazy-loaded dependencies and orchestration service functions
+├── utils.py            # Diagnostic tools and custom JSON/error formatters
+├── location_cache.json # High-performance local cache of location vectors
+├── requirements.txt    # Local orchestrator package dependencies
+└── README.md           # This documentation
 ```
 
-Requests missing or supplying an incorrect key are rejected with `401 Unauthorized`.
+## Quick Start
 
-### Idempotency Guard
+Run the application using an ASGI server (e.g., `uvicorn`):
 
-For `POST` requests, N18 computes a SHA-256 fingerprint of `{path}:{sorted JSON body}` via FastAPI middleware. If an identical request is already in flight, the duplicate is rejected with `409 Conflict`. This prevents double-submissions from the frontend during slow AI calls.
+```python
+import uvicorn
+from backend.n18_orchestrator import app
 
-Excluded from deduplication: `/cache/reset`, `/feedback/locations`, `/feedback/activities`.
-
-### Per-Endpoint Input Rules
-
-| Endpoint | Required fields |
-|---|---|
-| `/recommend` | At least one of: `text`, `tags`, `image`, `images`, `img_desc` |
-| `/activities` | `location` |
-| `/feedback/locations` | `feedback` |
-| `/feedback/activities` | `feedback` |
-
----
-
-## Workflow: Recommendation (`/recommend`)
-
-Orchestrates the full recommend pipeline:
-
-1. Read `text`, `tags`, `image` (Base64), `img_desc`, `constraints`, `context`
-2. If `image` is provided and `img_desc` is absent → call **N2** to generate `img_desc`
-3. Call **N1** to embed `text + tags + img_desc` → `user_vectors`
-4. Load locations from the hybrid cache (RAM → disk → N3)
-5. Map N3 `vectors` key to `location_vectors` for N4 contract
-6. Call **N4** to rank locations by cosine similarity
-7. Attach lazy image URLs (`/api/images/{location_id}_{idx}.jpg`), metadata, and geo to ranked results
-8. If `API_DEBUG` is set, attach a `trace` object with full pipeline visibility
-9. If the body carries a `refined` field, pass it through to the response
-
-**Response shape:**
-
-```json
-{
-  "locations": [ { "location_id", "score", "metadata", "geo", "images": ["url", ...] } ],
-  "trace": { ... },   // only when API_DEBUG=true
-  "refined": { ... }  // only after a feedback cycle
-}
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
 ```
 
----
+## API Endpoints & Routes
 
-## Workflow: Activities v1 (`/activities`)
+### Public Endpoints
 
-Legacy pipeline — calls **N5** (LLM) to generate activities on every request:
+| Endpoint | Method | Auth Required | Description |
+| :--- | :--- | :--- | :--- |
+| `/health` | GET | No | Runtime state and server health stats. |
+| `/recommend` | POST | Yes | Run embedding (N1), image description (N2), and location ranking (N4). |
+| `/activities` | POST | No | Generate (N5) and rank (N6) custom activities for a target location. |
+| `/locations` | GET | No | Fetch candidate locations for exploration view. |
+| `/api/images/<file>` | GET | No | Lazily retrieve and cache location images. |
 
-1. Embed user context via **N1**
-2. Build N5 input from `location` metadata
-3. Call **N5** to generate candidate activities
-4. Normalize activities through the LLM normalizer
-5. Embed generated activities via **N1** (batch)
-6. Rank via **N6** (cosine + attribute scoring)
-7. Enrich ranked activities with full metadata before returning
+### Feedback & Caching Endpoints
 
+| Endpoint | Method | Auth Required | Description |
+| :--- | :--- | :--- | :--- |
+| `/feedback/locations` | POST | Yes | Refine location recommendation list with user feedback (N17). |
+| `/feedback/activities`| POST | Yes | Refine generated activities with user feedback (N17). |
+| `/cache/reset` | POST | Yes | Force cache rebuild using PostgreSQL database records (N3). |
 
-## Workflow: Feedback (`/feedback/locations` and `/feedback/activities`)
+### Authentication & Profiles
 
-Pattern is identical for both feedback endpoints:
+| Endpoint | Method | Auth Required | Description |
+| :--- | :--- | :--- | :--- |
+| `/api/auth/register` | POST | No | Register new user account. |
+| `/api/auth/login` | POST | No | Authenticate user credentials and return user ID. |
+| `/api/profile/history`| POST | Yes | Log recommendation session output into user history (N3). |
+| `/api/profile/history/<uid>`| GET | Yes | Retrieve full recommendation query history for user. |
 
-1. Receive original `text`, `tags`, `img_desc` + new `feedback` string
-2. Call **N17** to refine the input parameters (`refined_text`, `refined_tags`, `refined_img_desc`)
-3. If N17 detects invalid/spam feedback, it returns empties and N18 short-circuits, returning a `"status": "unchanged"` payload to the frontend.
-4. Otherwise, re-run the corresponding main workflow with refined inputs
-5. Attach a `refined` object to the response so the frontend can show what changed
+## Request & Security Filters
 
----
+### 1. Internal API Key Validation
+Protected routes require the client to present the validation key in the request header:
+```text
+X-Internal-Key: <internal_api_secret_key>
+```
+*Requests with invalid keys are rejected with `401 Unauthorized`.*
 
-## Workflow: Explore (`/locations`)
+### 2. Idempotency Guard
+To prevent duplicate execution of long-running AI queries (e.g., double-clicks), N18 uses middleware to calculate a SHA-256 fingerprint of the request path + sorted JSON payload. Parallel matching requests are rejected with a `409 Conflict` until the first completes.
 
-Returns a slim location list for the `/explore` page in N16:
+## Developer Guidelines
 
-- Strips vectors
-- Returns `location_id`, `metadata`, `geo`, and the first image URL per location
-- Uses the same hybrid cache as `/recommend`
-
----
-
-## Image Serving (`/api/images/<filename>`)
-
-Images are served lazily: the frontend receives only URL strings in `/recommend` and `/locations` responses, then the browser fetches each image independently.
-
-- Filename format: `{location_id}_{index}.jpg`
-- Images are retrieved from PostgreSQL via `N3` and stored persistently in `image_cache/`
-- FastAPI's `FileResponse` serves them directly from disk on subsequent requests.
-- Successful responses carry `Cache-Control: public, max-age=86400` for browser caching
-
----
-
-## Caching Behavior
-
-N18 maintains a hybrid three-tier cache for location data:
-
-1. **RAM cache** (fastest)
-2. **Disk cache** — `location_cache.json` alongside `services.py` (survives restarts)
-3. **Fingerprint TTL** — fingerprint is refreshed at most every 10 seconds to reduce DB round-trips
-
-Cache validity is checked by comparing the stored fingerprint against `N3.get_db_fingerprint()`. A mismatch triggers a fresh location pull and updates both RAM and disk.
-
----
-
-## Response Fields Summary
-
-| Field | Present in |
-|---|---|
-| `locations` | `/locations`, `/feedback/locations` |
-| `activities` | `/activities`, `/feedback/activities` |
-| `ranking_meta` | `/activities` — N6 metadata |
-| `refined` | Any feedback endpoint — what N17 changed |
-| `trace` | `/recommend` when `API_DEBUG=true` |
-
----
-
-## Runtime Notes
-
-- The FastAPI app natively utilizes async routing.
-- The internal key, allowed origins, host, port, and debug flag are all loaded from `config`.
-- Module logging uses the project-wide `setup_logging("N18.*")` helper.
-- `uvicorn` is used as the ASGI web server.
+1. **Lifespan Warmup:** The orchestrator utilizes a FastAPI `lifespan` handler to pre-load SentenceTransformer models into memory before accepting connections, preventing initial request timeouts.
+2. **Lazy Spoke Loading:** Heavy dependencies and sub-modules are imported inside services dynamically, preserving fast system startup.
+3. **No Uncaught Crashes:** Routes should wrap spoke calls in error-handling middleware, logging faults and returning clean JSON responses.

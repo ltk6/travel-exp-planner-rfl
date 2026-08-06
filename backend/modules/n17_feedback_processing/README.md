@@ -1,115 +1,78 @@
-# N17 Feedback Processing Module
+# Module N17: Feedback Processing
 
-N17 refines a travel query after the user provides natural-language feedback. It builds a structured prompt from the current query state, calls the configured LLM chain to produce a refined parameter set, validates the returned tags, and falls back to a deterministic response if the LLM path fails.
+`N17` refines a travel query after the user provides natural-language feedback. It builds a structured prompt from the current query state, calls the configured LLM chain to produce a refined parameter set, validates the returned tags, and falls back to a deterministic response if the LLM path fails.
 
-## Responsibilities
+---
 
-- Accept the current query state (text, tags, img_desc) plus a user feedback message
-- Build a structured refinement prompt for the LLM
-- Call the configured LLM chain and request JSON-only output
-- Parse and validate the returned refinement payload
-- Filter returned tags against the allowed tag list
-- Fall back to a deterministic response when the LLM path fails or returns invalid JSON
+## Directory Structure
 
-## Module Structure
-
-```
+```text
 backend/modules/n17_feedback_processing/
-├── __init__.py              # Re-exports process_feedback
-├── pipeline.py    # Prompt construction, LLM call, parse + validate, fallback
-├── config.py
-├── schemas.py
-└── requirements.txt
+├── __init__.py         # Public API exports (process_feedback, N17FeedbackInput, etc.)
+├── pipeline.py         # Refinement orchestration, validation, and fallback logic
+├── config.py           # LLM parameters and API endpoint configurations
+├── schemas.py          # Input contract schemas
+└── requirements.txt    # Local dependencies
 ```
 
-## Public API
+---
+
+## Quick Start
+
+You can import and execute the module directly:
 
 ```python
-from modules.n17_feedback_processing import process_feedback
-from backend.shared.contracts.n17_contracts import N17FeedbackInput
+from backend.modules.n17_feedback_processing import process_feedback, N17FeedbackInput
 
-process_feedback(data: Union[N17FeedbackInput, dict]) -> dict
+payload_dict = {
+    "user_input": "Bãi biển Nha Trang",
+    "user_tags": ["beach", "nature"],
+    "img_desc": "",
+    "feedback_text": "I want less crowded places and more budget-friendly options"
+}
+
+# Run feedback processing using a dictionary input
+result = process_feedback(payload_dict)
+print(result["refined_text"])
+# Output: Địa điểm du lịch biển hoang sơ, yên tĩnh, chi phí thấp quanh Nha Trang
 ```
-
-`process_feedback()` enforces Pydantic V2 validation at the module boundary.
 
 ---
 
-## Input Contract
+## API & Data Contracts
+
+### Public API Signature
 
 ```python
-class N17FeedbackInput(BaseModel):
-    user_input: Optional[str] = ""         # Current free-form query text
-    user_tags: List[str] = []              # Current normalized tag list
-    img_desc: Optional[str] = ""           # Current image description
-    feedback_text: Optional[str] = ""      # User's refinement request
-    llm_chain: Optional[str] = None        # Optional model-chain override
+def process_feedback(data: Union[N17FeedbackInput, dict[str, Any]]) -> dict[str, Any]
 ```
 
-| Field | Description |
-|---|---|
-| `user_input` | The original text prompt the user submitted |
-| `user_tags` | Tags already selected in the UI |
-| `img_desc` | Visual description from N2 (if an image was uploaded) |
-| `feedback_text` | The user's new instruction (e.g. "add more outdoor options") |
-| `llm_chain` | Optional override to force a specific LLM model chain |
+### Input Schema (`N17FeedbackInput`)
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `user_input` | `str` | `""` | Original free-form text query. |
+| `user_tags` | `list[str]` | `[]` | List of tags selected or inferred previously. |
+| `img_desc` | `str` | `""` | Visual description of any uploaded image. |
+| `feedback_text` | `str` | `""` | User's feedback/instruction (e.g. "more quiet ones"). |
+| `llm_chain` | `str` / `None` | `None` | Optional LLM chain/model override. |
+
+### Output Contract
+
+The returned dictionary conforms to the following schema structure:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `refined_text` | `str` | Rewritten query incorporating feedback signals. |
+| `refined_tags` | `list[str]` | Filtered and refined tag list matching query needs. |
+| `refined_img_desc` | `str` | Preserved or updated image description. |
+| `explanation` | `str` | Explanation summary of adjustments made. |
+| `metadata` | `dict[str, Any]` | Tracing metadata (latency, model usage, etc.). |
 
 ---
 
-## Output Contract
+## Developer Guidelines
 
-```python
-class N17FeedbackOutput(BaseModel):
-    refined_text: Optional[str] = ""
-    refined_tags: List[str] = []
-    refined_img_desc: Optional[str] = ""
-    explanation: Optional[str] = ""
-    metadata: Dict[str, Any] = {}
-```
-
-| Field | Description |
-|---|---|
-| `refined_text` | Rewritten query text incorporating the feedback |
-| `refined_tags` | Updated, validated tag list |
-| `refined_img_desc` | Updated image description (usually preserved unless feedback changes focus) |
-| `explanation` | Human-readable summary of what changed — shown in N16 UI |
-| `metadata` | Provider name, model, and token usage |
-
-N18 passes `refined_text`, `refined_tags`, and `refined_img_desc` back into `recommend_service()` or `activities_service()` for a second run, then attaches the full refined payload to the response for display.
-
----
-
-## Processing Flow
-
-1. Build a prompt from the current `text`, `tags`, `img_desc`, and `feedback_text`
-2. Call the LLM provider chain and request strictly JSON output
-3. Parse the returned JSON object
-4. Validate required fields (`refined_text`, `refined_tags`, `explanation`)
-5. Filter `refined_tags` against the project's allowed tag list
-6. Fill `refined_img_desc` if the LLM omitted it (defaults to current value)
-7. Return the refined payload plus model metadata
-
----
-
-## Fallback Behavior
-
-If the LLM call fails, times out, or returns unparseable JSON, N17 returns:
-
-| Field | Fallback value |
-|---|---|
-| `refined_text` | Concatenation of current `user_input` + `feedback_text` |
-| `refined_tags` | Preserves current `user_tags` unchanged |
-| `refined_img_desc` | Preserves current `img_desc` unchanged |
-| `explanation` | `"Fallback: feedback appended to original query"` |
-
-This ensures N18 always gets a usable payload to re-run the main workflow.
-
----
-
-## Runtime Notes
-
-- N17 uses the same Groq-compatible LLM endpoint as N5
-- Model retries are performed across the configured provider chain
-- Responses must contain JSON only — the LLM prompt explicitly instructs this
-- Tag validation uses the project-wide tag registry (`backend.shared.maps.tags.ALL_TAGS`)
-- Logging covers LLM call attempts, parse results, and fallback events via the project logging helper
+1. **Tag Filtering:** The pipeline automatically filters and normalizes tags returned by the LLM against the allowed list of tags.
+2. **Fallback Strategy:** If the LLM times out or returns malformed JSON, N17 falls back gracefully to a deterministic text concatenation of `user_input + feedback_text` rather than failing.
+3. **Structured Outputs:** Prompts instruct the LLM to output strictly formatted JSON matching the expected keys.

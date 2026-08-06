@@ -1,120 +1,103 @@
-# N4 Location Ranking Module
+# Module N4: Location Ranking
 
-N4 ranks candidate locations using weighted multi-channel cosine similarity. It accepts a query-side vector bundle and signal counters from N1, scores every candidate location across four embedding channels, and returns the top-ranked results with normalized scores and short explanation strings.
+`N4` ranks candidate locations using weighted multi-channel cosine similarity. It accepts a query-side vector bundle and signal counters from N1, scores each candidate location across four embedding channels, and returns the top-ranked results with normalized scores and short explanation strings.
 
-## Responsibilities
+---
 
-- Accept query signal counters (`text_k`, `tags_k`) and vector channels from N1
-- Score each candidate location across `text`, `aug_text`, `aug_tags`, and `img_desc` channels
-- Resolve dynamic channel weights from the available signal strength
-- Sort, truncate to `top_k`, and normalize the final ranking output
-- Return lightweight ranking metadata for tracing
+## Directory Structure
 
-## Module Structure
-
-```
+```text
 backend/modules/n4_location_ranking/
-├── __init__.py         # Re-exports rank_locations
-├── pipeline.py   # Scoring, weighting, normalization logic
-├── schemas.py
-└── requirements.txt
+├── __init__.py         # Public API exports (rank_locations, N4RankInput, etc.)
+├── pipeline.py         # Scoring, dynamic weighting, and normalization logic
+├── schemas.py          # Validation schemas (Input/Output contracts)
+└── requirements.txt    # Local dependencies
 ```
 
-## Public API
+---
+
+## Quick Start
+
+You can import and execute the module directly:
 
 ```python
-from modules.n4_location_ranking import rank_locations
-from backend.shared.contracts.n4_contracts import N4RankInput
+from backend.modules.n4_location_ranking import rank_locations, N4RankInput
 
-rank_locations(data: Union[N4RankInput, dict]) -> dict
+payload_dict = {
+    "text_k": 2,
+    "tags_k": 3,
+    "user_vectors": {
+        "text": [0.1, 0.2, 0.3],
+        "aug_text": [0.1, 0.2, 0.3],
+        "aug_tags": [0.4, 0.5, 0.6],
+        "img_desc": None
+    },
+    "locations": [
+        {
+            "location_id": "loc_1",
+            "name": "Bãi biển Mỹ Khê",
+            "location_vectors": {
+                "text": [0.11, 0.21, 0.31],
+                "aug_tags": [0.41, 0.51, 0.61]
+            }
+        }
+    ],
+    "top_k": 5
+}
+
+# Run ranking using a dictionary input
+result = rank_locations(payload_dict)
+print(result)
+# Output:
+# {
+#     "locations": [
+#         {
+#             "location_id": "loc_1",
+#             "score": 1.0,
+#             "reason": "Phù hợp cao theo từ khóa tìm kiếm (text) và nhãn mô tả địa điểm (aug_tags)."
+#         }
+#     ],
+#     "metadata": {
+#         "latency_ms": 1.45
+#     }
+# }
 ```
-
-`rank_locations()` enforces Pydantic V2 validation at the module boundary.
 
 ---
 
-## Input Contract
+## API & Data Contracts
+
+### Public API Signature
 
 ```python
-class UserVectors(BaseModel):
-    text: Optional[List[float]] = None
-    aug_text: Optional[List[float]] = None
-    aug_tags: Optional[List[float]] = None
-    img_desc: Optional[List[float]] = None
-
-class N4RankInput(BaseModel):
-    text_k: int = 0
-    tags_k: int = 0
-    user_vectors: UserVectors
-    locations: List[Dict[str, Any]] = []
-    top_k: int = 5
+def rank_locations(data: Union[N4RankInput, dict[str, Any]]) -> dict[str, Any]
 ```
 
-| Field | Description |
-|---|---|
-| `text_k` | Text expansion count from N1 — used to scale `text`/`aug_text` weight |
-| `tags_k` | Tag expansion count from N1 — used to scale `aug_tags` weight |
-| `user_vectors` | Query-side embeddings from N1 |
-| `locations` | Candidate location list from N3 cache, each with `location_vectors` |
-| `top_k` | Maximum number of ranked results to return |
+### Input Schema (`N4RankInput`)
 
-> **Note:** N8 maps N3's `vectors` key to `location_vectors` before passing to N4 to match this contract.
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `text_k` | `int` | `0` | Text expansion count from N1 (scales `text`/`aug_text` weight). |
+| `tags_k` | `int` | `0` | Tag expansion count from N1 (scales `aug_tags` weight). |
+| `user_vectors` | `UserVectors` | `{}` | Query-side embedding vectors. |
+| `locations` | `list[dict]` | `[]` | List of candidate location dictionaries containing `location_vectors`. |
+| `top_k` | `int` | `5` | Maximum number of ranked results to return. |
 
----
+### Output Schema
 
-## Output Contract
+The returned dictionary contains the ranked candidate list:
 
-```python
-class RankedLocationItem(BaseModel):
-    location_id: Optional[str] = None
-    score: float = 0.0
-    reason: Optional[str] = ""
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `locations` | `list[dict]` | Sorted list of items containing `location_id`, `score`, and `reason`. |
+| `metadata` | `dict[str, Any]` | Diagnostic latency metrics. |
 
-class N4RankOutput(BaseModel):
-    locations: List[RankedLocationItem]
-    metadata: Dict[str, Any]
-```
-
-| Field | Description |
-|---|---|
-| `score` | Normalized relative to the top result (top result = 1.0) |
-| `reason` | Short explanation derived from the strongest active channels |
-| `metadata` | Timing and ranking diagnostics |
-
-If no candidate locations are provided, `locations` is empty and `metadata.latency_ms` is `0`.
+*Scores are normalized relative to the top result (where the top-scoring result is set to `1.0`).*
 
 ---
 
-## Scoring Behavior
+## Developer Guidelines
 
-N4 computes four cosine-similarity channel pairs between query and location vectors:
-
-| Query channel | Location channel |
-|---|---|
-| `text` | `text` |
-| `aug_text` | `text` |
-| `aug_tags` | `aug_tags` |
-| `img_desc` | `text` |
-
-The raw score is a weighted sum of those similarities. Channel weights are resolved dynamically from `text_k` and `tags_k` via the shared `get_weights()` helper — queries with richer tag signals give more weight to the `aug_tags` channel, and so on. Negative totals are clamped to `0.0`.
-
----
-
-## Ranking Flow
-
-1. Read `text_k`, `tags_k`, `user_vectors`, `locations`, and `top_k`
-2. Resolve channel weights from the signal counters
-3. Score every candidate location independently
-4. Sort candidates by descending raw score
-5. Truncate to `top_k`
-6. Normalize scores against the top result
-7. Build explanation strings from the strongest active channels
-8. Return ranked list and metadata
-
----
-
-## Runtime Notes
-
-- Cosine similarity returns `0.0` for missing, empty, zero-norm, or dimension-mismatched vectors
-- Explanation strings only include channels that are both active and sufficiently aligned
-- Logging covers ranking activity and per-call timing via the project logging helper
+1. **Dynamic Weighting:** Weighting is resolved dynamically using the shared `get_weights` helper based on `text_k` and `tags_k`.
+2. **Channel Mapping:** The calling orchestrator is responsible for mapping backend DB vector names to the expected `location_vectors` structure.
+3. **Empty Gracefulness:** If the input location candidate list is empty, N4 returns a blank list and a latency of `0.0` ms without raising an exception.

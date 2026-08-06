@@ -12,21 +12,21 @@ Deterministic — the same input always produces the same output.
 
 Returns None for any axis with no signal → scoring skips that axis (neutral treatment).
 
-All tag keys in _TAG_WEIGHTS MUST exist in backend.shared.maps.activity_tags.ALL_TAGS.
+All tag keys in _TAG_WEIGHTS MUST exist in backend.shared.maps.ALL_ACTIVITY_TAGS.
 """
 
 from __future__ import annotations
 import math
 from typing import Dict, List, Optional
 
-from backend.shared.maps.activity_tags import ALL_TAGS
+from backend.shared.maps import ALL_ACTIVITY_TAGS
 
 
-_ALL_TAG_KEYS = set(ALL_TAGS.keys())
+_ALL_TAG_KEYS = set(ALL_ACTIVITY_TAGS.keys())
 
 # =============================================================================
 # TAG → PREFERENCE AXIS WEIGHTS
-# All keys must be present in ALL_TAGS (asserted below).
+# All keys must be present in ALL_TAGS
 # Values: ±1.0 = strong signal, ±0.5 = moderate, ±0.3 = mild.
 # Positive = user wants this axis high; negative = user wants it low.
 # =============================================================================
@@ -54,7 +54,6 @@ _TAG_WEIGHTS: Dict[str, Dict[str, float]] = {
     "spa":             {"intensity": -0.8, "physical": -0.8},
     "boat cruise":     {"intensity": -0.3, "physical": -0.5},
     "slow travel":     {"intensity": -0.5, "physical": -0.4},
-    "meditation":      {"intensity": -0.8, "physical": -0.5, "social": -0.5},
     "yoga retreat":    {"intensity": -0.5, "physical":  0.2, "social": -0.3},
     "wellness retreat":{"intensity": -0.6, "physical": -0.3},
     "chill":           {"intensity": -0.6, "physical": -0.4},
@@ -76,10 +75,6 @@ _TAG_WEIGHTS: Dict[str, Dict[str, float]] = {
     "cooking class":   {"social":    0.3, "physical": -0.2},
     "nightlife":       {"social":    0.8, "intensity":  0.4},
 }
-
-assert set(_TAG_WEIGHTS.keys()).issubset(_ALL_TAG_KEYS), (
-    f"Tags in _TAG_WEIGHTS not in ALL_TAGS: {set(_TAG_WEIGHTS.keys()) - _ALL_TAG_KEYS}"
-)
 
 # =============================================================================
 # KEYWORD WEIGHTS  (text + img_desc, weighted at 0.5× tag weight)

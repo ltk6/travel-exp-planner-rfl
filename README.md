@@ -1,89 +1,92 @@
-# Travel Experience Planner Reflourished
+# Travel Experience Planner
 
-Hệ thống lập kế hoạch du lịch sử dụng semantic retrieval, multimodal input và LLM.  
-Giao diện người dùng được xây dựng bằng **Next.js**, backend API chạy trên **FastAPI (N18)**.
+A travel planning system utilizing semantic retrieval, multimodal inputs, and dynamic LLM generation. The frontend is built with Next.js, and the backend API orchestrator is powered by FastAPI (N18).
 
-## Các Tính năng Chính
-- **Tìm kiếm Semantic Đa phương thức (Multi-modal Semantic Search)**: Nhận diện sở thích qua văn bản và hình ảnh.
-- **Gợi ý Hoạt động Động (Dynamic Activity Generation)**: Sinh hoạt động bằng Groq LLM dựa trên địa điểm thực tế.
-- **Tinh chỉnh bằng Phản hồi (Feedback Loop)**: Ghi nhận yêu cầu của người dùng để điều chỉnh lại các gợi ý realtime.
+## Core Features
 
-## Công nghệ sử dụng
-- **Frontend**: Next.js
-- **Backend Orchestrator**: FastAPI (N18)
-- **LLM Engine**: Groq (Llama3/Mixtral)
-- **Embeddings**: SentenceTransformers (`intfloat/multilingual-e5-small` & `BAAI/bge-m3`)
-- **Cơ sở dữ liệu**: PostgreSQL với `pgvector` extension
+- **Multi-modal Semantic Search:** Processes user preferences through text and images.
+- **Dynamic Activity Generation:** Generates contextual itineraries using Groq LLMs based on real locations.
+- **Feedback Loop:** Ingests user feedback to refine recommendations in real-time.
 
-## Công cụ Hỗ trợ Phát triển
-- **Coding & Hỗ trợ chung**: Claude / Gemini (Hỗ trợ viết mã, debug, và pair-programming)
-- **Xử lý dữ liệu**: NotebookLM (Tổng hợp thông tin, chuẩn hóa và xử lý bộ dữ liệu địa điểm ban đầu)
+## Technology Stack
 
-## Khởi động nhanh
+- **Frontend:** Next.js
+- **Backend Orchestrator:** FastAPI (N18)
+- **LLM Engine:** Groq (Llama3/Mixtral)
+- **Embeddings:** SentenceTransformers (`intfloat/multilingual-e5-small` & `BAAI/bge-m3`)
+- **Database:** PostgreSQL with `pgvector`
 
-### Yêu cầu
+## Quick Start
+
+### Requirements
 
 - Python 3.10+
-- Node.js 18+ và npm
-- PostgreSQL (với pgvector extension)
+- Node.js 18+ and npm
+- PostgreSQL (with pgvector extension)
 
-### Cấu hình môi trường
+### Environment Configuration
 
 ```bash
-# Cấu hình Backend
+# Backend configuration
 cp .env.example .env
-# Mở .env và điền các biến: PG_URI, GROQ_API_KEY, INTERNAL_API_KEY
+# Edit .env and populate: PG_URI, GROQ_API_KEY, INTERNAL_API_KEY
 
-# Cấu hình Frontend
+# Frontend configuration
 cd frontend/n16_web_ui
 cp .env.local.example .env.local
-# Mở .env.local và cấu hình INTERNAL_API_KEY
+# Edit .env.local and populate: INTERNAL_API_KEY
 ```
 
-### Chạy trên Windows
+### Run Locally (Windows)
 
 ```bat
 run.bat
 ```
 
-- Tự động tạo và kích hoạt Python venv
-- Cài đặt Python dependencies từ `requirements.txt` (bỏ qua nếu đã có)
-- Cài đặt Node.js dependencies cho Next.js (bỏ qua nếu đã có)
-- Khởi động backend trên `:8000` và frontend trên `:3000`
-- Tự động mở trình duyệt tại `http://localhost:3000`
+The script automates the following:
+1. Creates and activates the Python virtual environment.
+2. Installs Python dependencies from `requirements.txt`.
+3. Installs Node.js dependencies for Next.js.
+4. Boots the backend on `:8000` and frontend on `:3000`.
+5. Launches the default browser at `http://127.0.0.1:3000`.
 
-### Sau khi khởi động
+### Service Endpoints
 
 | Service | URL |
 |---|---|
-| **Frontend (Next.js)** | http://localhost:3000 |
-| **Backend API** | http://localhost:8000 |
-| **Health check** | http://localhost:8000/health |
+| Frontend (Next.js) | http://127.0.0.1:3000 |
+| Backend API | http://127.0.0.1:8000 |
+| Health Check | http://127.0.0.1:8000/health |
 
-## Quản lý Dữ liệu (Data Pipeline)
+## Data Pipeline
 
-Hệ thống cung cấp các công cụ để chuẩn hóa và nạp dữ liệu địa điểm vào cơ sở dữ liệu vector:
-- **Cập nhật & Sinh Embeddings**: Chạy `python backend/n3_database/seeds/embed_locations.py` để tự động tạo vector embeddings (hỗ trợ lưu gia tăng - incremental) cho các địa điểm mới trong `locations.json`. Dữ liệu đầu ra được lưu tại `locations_with_vectors.json`.
-## Kiến trúc
+The system includes tools to format and ingest location data into the vector database:
+- **Vector Generation:** Run `python backend/n3_database/seeds/embed_locations.py` to generate embeddings for new locations in `locations.json`. Outputs to `locations_with_vectors.json`.
 
-Hệ thống được chia thành các module độc lập (N0–N17), mỗi module có contract Pydantic V2 riêng xác định input/output tại ranh giới module:
+## Architecture (Phase 0 Baseline)
 
-| Module | Chức năng |
+The system operates on a hub-and-spoke architecture. Modules N1-N17 execute in-process within the core N18 FastAPI orchestrator. Boundaries are enforced via Pydantic V2 contracts.
+
+| Module | Function |
 |---|---|
-| N1 | Embedding (BGE-M3, multi-channel) |
-| N2 | Image processing → text description |
+| N0 | Sample module template |
+| N1 | Embedding generation (BGE-M3, E5) |
+| N2 | Image processing to text |
 | N3 | PostgreSQL persistence (locations, users, history) |
 | N4 | Location ranking (cosine similarity) |
-| N5 | Activity generation |
-| N6 | Activity ranking (semantic + attribute) |
-| N7 | Frontend (Streamlit) superseded by N16 |
-| N8 | API orchestrator (Flask) superseded by N18 |
-| N9-N14 | Activity retrievals (real maps) removed for instability |
-| N15 | User profile handling absorbed by N3 |
-| N16 | Frontend (Next.js + Zustand) |
+| N5 | Activity generation (LLM) |
+| N6 | Activity ranking |
+| N16 | Next.js Frontend |
 | N17 | Feedback processing |
-| N18 | API orchestrator (FastAPI) |
+| N18 | FastAPI Orchestrator |
+
+*(Note: N7-N15 are deprecated or superseded components).*
+
+### Current Operational Risks
+
+The baseline architecture relies on an in-process execution model without container isolation, leading to environmental fragility. The database relies on a managed cloud instance, violating the zero-cost local-first objective.
+
+**Primary Risk:** The N5 Activity Generation module relies on a single upstream LLM provider. Synchronous execution means an API rate limit (`429 Too Many Requests`) will block N18 worker threads, causing a cascading system failure. Addressing this fragility through microservice extraction and resilience patterns is the focus of subsequent roadmap phases.
 
 ---
-
-*Lưu ý: Dự án này là phiên bản được duy trì và tiếp tục phát triển sau khi khóa học Tư duy tính toán HK2 2025-2026 kết thúc. Dự án gốc ban đầu là [`travel-exp-planner`](https://github.com/ltk6/travel-exp-planner). Vui lòng xem [LICENSE](LICENSE) để biết thông tin chi tiết về bản quyền.*
+*Note: This repository is a continued iteration of the original `travel-exp-planner`. See LICENSE for details.*

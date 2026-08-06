@@ -1,0 +1,23 @@
+
+> web@0.1.0 dev
+> next dev --webpack
+
+▲ Next.js 16.2.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.224:3000
+- Environments: .env.local
+✓ Ready in 534ms
+○ (serwist) Serwist is disabled.
+○ (serwist) Serwist is disabled.
+
+ GET / 200 in 62ms (next.js: 4ms, application-code: 58ms)
+ GET / 200 in 234ms (next.js: 12ms, application-code: 222ms)
+[Health Check] Attempt 1 error: fetch failed
+[Health Check] Attempt 2 error: fetch failed
+[Health Check] Attempt 3 error: fetch failed
+[Health Check] Attempt 4 error: fetch failed
+[Health Check] Attempt 5 error: fetch failed
+[Health Check] Attempt 6 error: fetch failed
+[Health Check] Attempt 7 error: fetch failed
+[Health Check] Attempt 8 error: fetch failed
+ GET /api/health 200 in 56s (next.js: 1098ms, application-code: 55s)

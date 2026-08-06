@@ -1,0 +1,61 @@
+Starting end-to-end baseline load check against ALL endpoints...
+Base URL: http://127.0.0.1:8000
+
+--- Testing Endpoint: health_liveness (/health) ---
+  Req 01 OK | Client: 26ms
+  Req 02 OK | Client: 23ms
+  Req 03 OK | Client: 3ms
+  Req 04 OK | Client: 2ms
+  Req 05 OK | Client: 1ms
+
+--- Testing Endpoint: health_deep (/health/deep) ---
+  Req 01 OK | Client: 21ms
+  Req 02 OK | Client: 36ms
+  Req 03 OK | Client: 15ms
+  Req 04 OK | Client: 16ms
+  Req 05 OK | Client: 17ms
+
+--- Testing Endpoint: explore (/explore) ---
+  Req 01 OK | Client: 1796ms
+  Req 02 OK | Client: 6ms
+  Req 03 OK | Client: 5ms
+  Req 04 OK | Client: 17ms
+  Req 05 OK | Client: 5ms
+
+--- Testing Endpoint: locations (/locations) ---
+  Req 01 OK | Client: 738ms | N1: 670ms | N3: 0ms | N4: 59ms
+  Req 02 OK | Client: 354ms | N1: 262ms | N3: 0ms | N4: 86ms
+  Req 03 OK | Client: 454ms | N1: 352ms | N3: 0ms | N4: 81ms
+  Req 04 OK | Client: 447ms | N1: 354ms | N3: 0ms | N4: 88ms
+  Req 05 OK | Client: 422ms | N1: 314ms | N3: 0ms | N4: 90ms
+
+--- Testing Endpoint: activities (/activities) ---
+  Req 01 OK | Client: 5389ms | N1_light_query: 199ms | N5: 4117ms | N1_light_batch: 1057ms | N6: 0ms
+  Req 02 OK | Client: 5560ms | N1_light_query: 42ms | N5: 4277ms | N1_light_batch: 1238ms | N6: 1ms
+  Req 03 OK | Client: 8512ms | N1_light_query: 44ms | N5: 8465ms | N1_light_batch: 0ms | N6: 0ms
+  Req 04 OK | Client: 3767ms | N1_light_query: 63ms | N5: 2817ms | N1_light_batch: 869ms | N6: 15ms
+  Req 05 OK | Client: 10385ms | N1_light_query: 55ms | N5: 9945ms | N1_light_batch: 384ms | N6: 0ms
+
+--- Testing Endpoint: feedback_locations (/feedback/locations) ---
+  Req 01 OK | Client: 2871ms | N17: 866ms | N1: 748ms | N3: 1156ms | N4: 73ms
+  Req 02 OK | Client: 2100ms | N17: 797ms | N1: 1127ms | N3: 0ms | N4: 166ms
+  Req 03 OK | Client: 2380ms | N17: 1168ms | N1: 1041ms | N3: 0ms | N4: 152ms
+  Req 04 OK | Client: 3495ms | N17: 2764ms | N1: 591ms | N3: 0ms | N4: 127ms
+  Req 05 OK | Client: 2998ms | N17: 914ms | N1: 782ms | N3: 1109ms | N4: 143ms
+
+--- Testing Endpoint: feedback_activities (/feedback/activities) ---
+  Req 01 OK | Client: 14730ms | N17: 1167ms | N1_light_query: 102ms | N5: 12529ms | N1_light_batch: 924ms | N6: 0ms
+  Req 02 OK | Client: 8855ms | N17: 4657ms | N1_light_query: 46ms | N5: 3059ms | N1_light_batch: 1059ms | N6: 0ms
+  Req 03 OK | Client: 9573ms | N17: 4670ms | N1_light_query: 57ms | N5: 4008ms | N1_light_batch: 836ms | N6: 0ms
+  Req 04 OK | Client: 18155ms | N17: 3149ms | N1_light_query: 78ms | N5: 13793ms | N1_light_batch: 1112ms | N6: 2ms
+  Req 05 OK | Client: 9102ms | N17: 4768ms | N1_light_query: 114ms | N5: 3293ms | N1_light_batch: 922ms | N6: 0ms
+
+==========================================
+ Baseline Results Exported: c:\Users\Khanh\source\repos\travel-exp-planner-refloursihed\benchmarks\results\results.json 
+ - health_liveness: 5/5 OK | P95 Latency: 25.4ms
+ - health_deep: 5/5 OK | P95 Latency: 33.0ms
+ - explore: 5/5 OK | P95 Latency: 1440.2ms
+ - locations: 5/5 OK | P95 Latency: 681.2ms
+ - activities: 5/5 OK | P95 Latency: 10010.4ms
+ - feedback_locations: 5/5 OK | P95 Latency: 3395.6ms
+ - feedback_activities: 5/5 OK | P95 Latency: 17470.0ms

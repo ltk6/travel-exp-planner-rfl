@@ -1,3 +1,6 @@
+# --- Dev notes ---
+notes/
+
 # --- Python ---
 __pycache__/
 *.py[codz]
@@ -32,6 +35,4 @@ Thumbs.db
 
 # --- Project Specific Caches ---
 *cache*.json
-backend/modules/activity_retrievals/**/cache/
-backend/modules/activity_retrievals/processed/
 backend/n18_orchestrator/image_cache/

@@ -1,123 +1,106 @@
-# N1 Embedding Module
+# Module N1: Embedding
 
-N1 is the semantic entry point for the retrieval pipeline. It takes raw user or location input, expands the available signals across four semantic channels, and returns normalized embedding vectors plus lightweight signal metadata used by downstream ranking modules.
+`N1` is the semantic entry point for the retrieval pipeline. It takes raw user queries or location text data, expands available signals across four semantic channels, and returns normalized embedding vectors along with metadata.
 
-## Responsibilities
+---
 
-- Preprocess `text`, `tags`, and `img_desc` into richer semantic strings via channel-specific augmentation
-- Generate 1024-dim normalized embeddings for `text`, `aug_text`, `aug_tags`, and `img_desc`
-- Return signal-strength counters `text_k` and `tags_k` for dynamic weight resolution in N4/N6
-- Attach per-item metadata (model name, device, latency) to every output
+## Directory Structure
 
-## Module Structure
-
-```
+```text
 backend/modules/n1_embedding/
-├── pipeline.py      # Public API: embed(), embed_batch(), light_embed(), light_embed_batch()
-├── embedder.py      # SentenceTransformer wrapper, model singleton, embed_strings()
-├── preprocessor.py  # Text expansion, tag ontology lookup, channel string construction
-├── config.py
-├── schemas.py
-└── requirements.txt
+├── __init__.py         # Public API exports (embed, light_embed, N1EmbedInput, etc.)
+├── pipeline.py         # Entry points and orchestrating logic
+├── embedder.py         # SentenceTransformer wrapper and singleton model instance
+├── preprocessor.py     # Text cleaning and tag ontology expansion logic
+├── schemas.py          # Validation schemas (Input/Output contracts)
+├── config.py           # Local model configurations
+└── requirements.txt    # Local dependencies
 ```
-
-## Public API
-
-```python
-from modules.n1_embedding import embed, embed_batch, light_embed, light_embed_batch
-from modules.n1_embedding.schemas import N1EmbedInput
-
-embed(data: Union[N1EmbedInput, dict]) -> dict
-embed_batch(data_list: list[Union[N1EmbedInput, dict]]) -> list[dict]
-
-light_embed(data: Union[N1EmbedInput, dict], task_type: str = "passage") -> dict
-light_embed_batch(data_list: list[Union[N1EmbedInput, dict]], task_type: str = "passage") -> list[dict]
-```
-
-`embed()` and `light_embed()` are thin wrappers over their respective `_batch([data])` functions. All functions enforce Pydantic V2 validation at the module boundary.
 
 ---
 
-## Input Contract
+## Quick Start
+
+You can import and execute the module directly:
 
 ```python
-class N1EmbedInput(BaseModel):
-    text: str = ""          # Free-form user or location text
-    tags: List[str] = []    # Controlled travel tags
-    img_desc: str = ""      # Visual description from N2 (optional)
-```
+from backend.modules.n1_embedding import light_embed, N1EmbedInput
 
-All fields are optional and default to empty. At least one non-empty field is expected for a useful embedding.
+# Option 1: Execute using a dictionary payload
+payload_dict = {
+    "text": "Quiet coffee shop with good wifi",
+    "tags": ["work", "cafe"],
+    "img_desc": "Cozy indoor seating area"
+}
+result_dict = light_embed(payload_dict, task_type="passage")
+
+# Option 2: Execute using a Pydantic object
+payload_obj = N1EmbedInput(
+    text="Quiet coffee shop with good wifi",
+    tags=["work", "cafe"],
+    img_desc="Cozy indoor seating area"
+)
+result_obj = light_embed(payload_obj, task_type="passage")
+
+print(result_obj["vectors"]["text"][:3])
+# Output: [-0.0154, 0.0431, -0.0092]
+```
 
 ---
 
-## Output Contract
+## API & Data Contracts
+
+### Public API Signature
 
 ```python
-class PreprocessedText(BaseModel):
-    text: Optional[str] = ""
-    aug_text: Optional[str] = ""
-    aug_tags: Optional[str] = ""
-    img_desc: Optional[str] = ""
+# Process a single item
+def embed(data: Union[N1EmbedInput, dict[str, Any]]) -> dict[str, Any]
+def light_embed(data: Union[N1EmbedInput, dict[str, Any]], task_type: str = "passage") -> dict[str, Any]
 
-class EmbedVectors(BaseModel):
-    text: Optional[List[float]] = None
-    aug_text: Optional[List[float]] = None
-    aug_tags: Optional[List[float]] = None
-    img_desc: Optional[List[float]] = None
+# Process multiple items in batch (single model forward pass)
+def embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]]) -> list[dict[str, Any]]
+def light_embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]], task_type: str = "passage") -> list[dict[str, Any]]
+```
 
+### Input Schema (`N1EmbedInput`)
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `text` | `str` | `""` | Free-form user queries or location description text. |
+| `tags` | `list[str]` | `[]` | List of category tags (e.g. `['romantic', 'nature']`). |
+| `img_desc` | `str` | `""` | Descriptive text generated from images (optional). |
+
+### Output Schema
+
+Each output item dictionary conforms to the following structure:
+
+```python
 class N1EmbedOutput(BaseModel):
-    text_k: int = 0
-    tags_k: int = 0
+    text_k: int
+    tags_k: int
     preprocessed: PreprocessedText
     vectors: EmbedVectors
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 ```
 
-| Field | Description |
-|---|---|
-| `text_k` | Count of emotion/context expansions merged into `aug_text` |
-| `tags_k` | Count of recognized tag expansions merged into `aug_tags` |
-| `preprocessed` | Actual strings sent to the embedding model (for tracing) |
-| `vectors` | 1024-dim float lists, or `None` for channels with no content |
-| `metadata` | `{model, device, latency_ms}` |
+#### `preprocessed` Details
+* `text` / `img_desc`: Cleaned & trimmed input text.
+* `aug_text`: Input text + matched context/mood keyword expansions.
+* `aug_tags`: Ontology category expansions generated from input tags.
+
+#### `vectors` Details
+* Contains 1024-dimensional float list embeddings for: `text`, `aug_text`, `aug_tags`, and `img_desc`.
+* Unused channels (where input was empty) will map to `None`.
+
+#### `metadata` Tracing Details
+* `model`: Name of the embedding model used.
+* `device`: CPU/CUDA running device.
+* `latency_ms`: Execution latency in milliseconds.
 
 ---
 
-## Preprocessing Behavior
+## Developer Guidelines
 
-Before encoding, `preprocessor.preprocess()` constructs four channel strings:
-
-| Channel | Content |
-|---|---|
-| `text` | Original text, trimmed |
-| `aug_text` | Original text + matched emotion/context keyword expansions |
-| `aug_tags` | Ontology expansions for recognized tag values |
-| `img_desc` | Original image description, trimmed |
-
-`text_k` and `tags_k` count how many expansions were added. These are passed to N4/N6 to scale trust in each channel dynamically — a query with rich tags gives more weight to `aug_tags`, and so on.
-
----
-
-## Batch Strategy
-
-`embed_batch()` is the preferred high-throughput path and is used by N18 for both user-query embedding and activity batch-embedding:
-
-1. Validate and preprocess every item
-2. Flatten all four channels across the entire batch into one string list
-3. Run a single `SentenceTransformer.encode()` call
-4. Unflatten results back into per-item output dicts
-
-This ensures exactly one GPU/CPU forward pass regardless of batch size.
-
----
-
-## Runtime Notes
-
-- Models are configured in `modules/n1_embedding/config.py`:
-  - Default Model: `BAAI/bge-m3` via `config.EMBEDDING_MODEL_NAME`
-  - Light Model: `intfloat/multilingual-e5-small` via `config.LIGHT_EMBEDDING_MODEL_NAME`
-- Embeddings are generated with `normalize_embeddings=True` (unit vectors for cosine similarity)
-- Empty strings produce `None` vectors, preserved structurally in the output
-- The models are loaded once as module-level singletons via `embedder.get_model()` and `embedder.get_light_model()`
-- Device (CPU/GPU) is detected automatically and reported in metadata
+1. **Model Choices:** Use `embed` for heavy BGE-M3 embeddings and `light_embed` for multilingual-e5-small embeddings when throughput is critical.
+2. **Channel Weighting:** Downstream ranking modules rely on `text_k` and `tags_k` to dynamically scale cosine weights. Do not omit these counters.
+3. **Batching:** When processing multiple inputs, always use `embed_batch` or `light_embed_batch` to avoid sequential CPU/GPU overhead.

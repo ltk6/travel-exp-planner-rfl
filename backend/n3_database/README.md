@@ -1,225 +1,81 @@
-# N3 Database Module
+# N3: Database Management
 
-N3 is the unified persistence layer. It manages three data domains: location records, user authentication, and recommendation history. All data is stored in PostgreSQL using `pgvector` for vector columns and JSONB for flexible payloads.
+`N3` is the database persistence layer. It manages three data domains: location records, user authentication, and recommendation history. All data is stored in PostgreSQL using `pgvector` for vector columns and JSONB for flexible payloads.
 
-## Responsibilities
+## Directory Structure
 
-- Initialize all PostgreSQL schemas and required extensions
-- Store and retrieve location vectors, metadata, geo, and images
-- Manage user account registration and login
-- Persist and retrieve full recommendation history per user
-- Expose a lightweight database fingerprint for cache or sync checks
-- Protect all connections with a Circuit Breaker and exponential-backoff retry
+```text
+backend/n3_database/
+├── __init__.py         # Public API exports (database functions and input schemas)
+├── db_manager.py       # Core PostgreSQL interactions, connection pools, and query logic
+├── schemas.py          # Input and output validation contracts
+├── seeds/              # Database seed scripts and migrations
+├── requirements.txt    # Local dependencies
+└── README.md           # This documentation
+```
 
 ## Connection Resilience
 
-N3 uses a built-in `CircuitBreaker` on all database connections:
+N3 wraps database operations in a connection retry-wrapper with exponential backoff and a Circuit Breaker:
+- **Breaker Opens:** After 3 consecutive failures, the breaker opens for 30 seconds to fail-fast.
+- **Breaker Closes:** Retries occur inside half-open state and close the breaker on success.
 
-- After 3 consecutive connection failures the breaker **opens**, rejecting all calls immediately to fail-fast
-- After 30 seconds the breaker enters **half-open**, allowing one test connection
-- On success the breaker **closes** and normal operation resumes
+## Quick Start
 
-Each connection attempt retries up to 3 times with exponential backoff (0.5 s → 1 s → 2 s) before recording a failure.
-
----
-
-## Domain 1: Locations
-
-### Public API
+Initialize the database and perform basic authentication operations:
 
 ```python
-init_db(drop_existing: bool = False) -> None
-save_location(location_data: dict[str, Any]) -> dict[str, Any]
-get_all_locations(include_images: bool = True) -> dict[str, Any]
-get_db_fingerprint() -> str
-get_location_image_by_index(location_id: str, idx: int) -> bytes | None
+from backend.n3_database import register_user, login_user, N3RegisterInput
+
+# Register a new user
+register_payload = N3RegisterInput(username="testuser", password="securepassword123")
+reg_result = register_user(register_payload)
+print(reg_result)
+# Output: {"status": "success", "message": "User registered successfully", "user_id": 1}
+
+# Log in
+login_result = login_user({"username": "testuser", "password": "securepassword123"})
+print(login_result)
+# Output: {"status": "success", "message": "Login successful", "user_id": 1}
 ```
 
-### Storage Schema
+## API & Data Contracts
 
-Single `locations` table:
-
-| Column | Type | Notes |
-|---|---|---|
-| `location_id` | `VARCHAR(255) PK` | Primary key |
-| `text`, `aug_text`, `aug_tags`, `img_desc` | `vector(1024)` | Embedding channels |
-| `metadata` | `JSONB` | Descriptive fields |
-| `geo` | `JSONB` | Coordinates or map metadata |
-| `images` | `BYTEA[]` | Raw image bytes |
-| `updated_at` | `TIMESTAMP` | Used for fingerprinting |
-
-### Input Shape (`save_location`)
+### Public API Functions
 
 ```python
-{
-    "location_id": str,
-    "vectors": {
-        "text": list[float] | None,
-        "aug_text": list[float] | None,
-        "aug_tags": list[float] | None,
-        "img_desc": list[float] | None,
-    },
-    "metadata": dict[str, Any],
-    "geo": dict[str, Any],
-    "images_binary": list[bytes],  # optional
-}
+# Initializations
+def init_db(drop_existing: bool = False) -> None
+def init_profile_db(drop_existing: bool = False) -> None
+
+# Locations
+def save_location(location_data: dict[str, Any]) -> dict[str, Any]
+def get_all_locations(include_images: bool = True) -> dict[str, Any]
+def get_db_fingerprint() -> str
+def get_location_image_by_index(location_id: str, idx: int) -> bytes | None
+
+# Authentication
+def register_user(data: Union[N3RegisterInput, dict[str, Any]]) -> dict[str, Any]
+def login_user(data: Union[N3LoginInput, dict[str, Any]]) -> dict[str, Any]
+
+# History
+def save_rec_turn(data: Union[N3SaveHistoryInput, dict[str, Any]]) -> dict[str, Any]
+def get_user_history(user_id: int) -> dict[str, Any]
 ```
 
-- `images_binary` is optional; omitting it preserves existing images on upsert
+### Input Schemas
 
-### Output Contracts (`get_all_locations`)
+#### 1. `N3RegisterInput` / `N3LoginInput`
+- `username` (`str`): Unique account username.
+- `password` (`str`): Plaintext user password.
 
-All retrieval outputs are strictly validated at the N3 exit boundary using **Pydantic V2**:
+#### 2. `N3SaveHistoryInput`
+- `user_id` (`int`): ID of the user.
+- `input_data` (`dict`): Query parameters, text, tags, and descriptors.
+- `output_data` (`dict`): Recommended locations and activities.
 
-```python
-class N3LocationVectors(BaseModel):
-    text: Optional[List[float]] = None
-    aug_text: Optional[List[float]] = None
-    aug_tags: Optional[List[float]] = None
-    img_desc: Optional[List[float]] = None
+## Developer Guidelines
 
-class N3LocationMetadata(BaseModel):
-    name: Optional[str] = "Unnamed Location"
-    description: Optional[str] = ""
-    tags: List[str] = Field(default_factory=list)
-    coordinates: Optional[Dict[str, Optional[float]]] = None
-    address: Optional[str] = None
-    model_config = {"extra": "allow"}
-
-class N3Geo(BaseModel):
-    lat: Optional[float] = 0.0
-    lng: Optional[float] = 0.0
-    model_config = {"extra": "allow"}
-
-class N3LocationModel(BaseModel):
-    location_id: str
-    vectors: N3LocationVectors = Field(default_factory=N3LocationVectors)
-    metadata: N3LocationMetadata = Field(default_factory=N3LocationMetadata)
-    geo: Optional[N3Geo] = None
-    images: List[str] = Field(default_factory=list)
-
-class N3GetLocationsOutput(BaseModel):
-    status: Optional[str] = "success"
-    total: Optional[int] = 0
-    data: List[N3LocationModel] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-```
-
-`save_location` returns:
-
-```python
-{
-    "status": "success" | "error",
-    "location_id": str,
-    "message": str,        # only on error
-    "metadata": {"source": "postgresql", "latency_ms": int},
-}
-```
-
-
-
-## Domain 2: User Authentication
-
-### Public API
-
-```python
-init_profile_db(drop_existing: bool = False) -> None
-register_user(username: str, password: str) -> dict[str, Any]
-login_user(username: str, password: str) -> dict[str, Any]
-```
-
-### Storage Schema
-
-`users` table:
-
-| Column | Type |
-|---|---|
-| `user_id` | `SERIAL PK` |
-| `username` | `VARCHAR(255) UNIQUE` |
-| `password_hash` | `VARCHAR(255)` |
-| `created_at` | `TIMESTAMP` |
-
-Passwords are hashed with `werkzeug.security.generate_password_hash`.
-
-### Contracts
-
-```python
-class N3RegisterInput(BaseModel):
-    username: str
-    password: str
-
-class N3LoginInput(BaseModel):
-    username: str
-    password: str
-
-class N3AuthOutput(BaseModel):
-    status: Optional[str] = ""
-    message: Optional[str] = ""
-    user_id: Optional[int] = None
-```
-
-- `register_user` returns `status: "error"` with `message: "Ten dang nhap da ton tai"` on duplicate username
-- `login_user` returns `status: "error"` with `message: "Sai tai khoan va mat khau"` on bad credentials
-
----
-
-## Domain 3: Recommendation History
-
-### Public API
-
-```python
-save_rec_turn(user_id: int, input_data: dict, output_data: dict) -> dict[str, Any]
-get_user_history(user_id: int) -> dict[str, Any]
-```
-
-### Storage Schema
-
-`rec_history` table:
-
-| Column | Type |
-|---|---|
-| `history_id` | `SERIAL PK` |
-| `user_id` | `INT` |
-| `input_data` | `JSONB` |
-| `output_data` | `JSONB` |
-| `created_at` | `TIMESTAMP` |
-
-### Contracts
-
-```python
-class N3SaveHistoryInput(BaseModel):
-    user_id: int
-    input_data: Dict[str, Any] = Field(default_factory=dict)
-    output_data: Dict[str, Any] = Field(default_factory=dict)
-
-class N3HistoryItem(BaseModel):
-    history_id: Optional[int] = None
-    input_data: Dict[str, Any] = Field(default_factory=dict)
-    output_data: Dict[str, Any] = Field(default_factory=dict)
-    created_at: Optional[str] = None
-
-class N3GetHistoryOutput(BaseModel):
-    status: Optional[str] = "success"
-    data: List[N3HistoryItem] = Field(default_factory=list)
-```
-
-- `get_user_history` returns results ordered by `created_at DESC`
-- `created_at` is serialized as `"YYYY-MM-DD HH:MM:SS"` string
-
----
-
-## Runtime Notes
-
-- Database connections use `psycopg2` with `RealDictCursor`
-- `pgvector.psycopg2.register_vector()` is called on every new connection
-- The database fingerprint is derived from total row count + max `updated_at` — a cheap way to detect whether a full reload is necessary
-- Logging is configured through the project logging helper
-
-## Seed Tooling
-
-N3 also includes a seed-ingestion helper in [`seeds/add_more_locs/`](seeds/add_more_locs/README.md).
-
-- It embeds new locations through N1 before saving them
-- It updates `locations.json`, `locations_with_vectors.json`, `seeds/raw_imgs/`, and `seeds/images/`
-- It saves the final record into PostgreSQL using resized image bytes from `seeds/images/`
-- It asks for confirmation before deleting source JSON/image files after a successful import
+1. **pgvector extension:** All location-query operations require the PostgreSQL server to have the `pgvector` extension installed.
+2. **Flexible Payload Storage:** Fields under location `metadata` are stored as a JSONB column, allowing downstream updates to append details without schema migration.
+3. **Transaction Safety:** DB pool handles open/close sessions. Keep read/write transactions fast to prevent pool exhaustion.

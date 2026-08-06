@@ -20,12 +20,12 @@ from .config import (
 )
 logger = setup_logging("N17")
 
-from backend.shared.maps.activity_tags import ALL_TAGS
+from backend.shared.maps import ALL_ACTIVITY_TAGS
 from .schemas import N17FeedbackInput
 
 
-VALID_TAGS = sorted(ALL_TAGS.keys())
-VALID_TAGS_SET = set(ALL_TAGS.keys())
+VALID_TAGS = sorted(ALL_ACTIVITY_TAGS.keys())
+VALID_TAGS_SET = set(ALL_ACTIVITY_TAGS.keys())
 
 def call_groq_direct(prompt: str, system: str = "You are a travel expert. Respond with pure JSON only.", model: str = None) -> tuple:
     """Bare logic to call Groq without complex provider registry."""

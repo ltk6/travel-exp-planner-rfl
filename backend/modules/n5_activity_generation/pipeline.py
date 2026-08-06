@@ -17,7 +17,7 @@ from config import setup_logging
 from .config import TARGET_ACT_COUNT
 logger = setup_logging("N5")
 
-from backend.shared.maps.activity_tags import ALL_TAGS
+from backend.shared.maps import ALL_ACTIVITY_TAGS
 from . import llm_provider
 from .schemas import N5GenerateInput
 
@@ -26,8 +26,8 @@ VALID_ACTIVITY_TYPES = {
     "food", "adventure", "culture", "nightlife", "shopping",
     "relaxation", "nature", "photography", "experience",
 }
-VALID_TAGS = sorted(ALL_TAGS.keys())
-VALID_TAGS_SET = set(ALL_TAGS.keys())
+VALID_TAGS = sorted(ALL_ACTIVITY_TAGS.keys())
+VALID_TAGS_SET = set(ALL_ACTIVITY_TAGS.keys())
 
 # =============================================================================
 # PUBLIC ENTRY POINT
