@@ -33,13 +33,3 @@ def cosine(a: Optional[Sequence[float]], b: Optional[Sequence[float]]) -> float:
     if norm_a == 0.0 or norm_b == 0.0:
         return 0.0
     return dot / (math.sqrt(norm_a) * math.sqrt(norm_b))
-
-
-def cosine_normalized_unit(a: Optional[Sequence[float]], b: Optional[Sequence[float]]) -> float:
-    """
-    Cosine similarity shifted/scaled to [0.0, 1.0]: `(cos + 1) / 2`.
-
-    Used when merging similarity into a total score [0, 1] along with other signals
-    (constraint score, context score, etc.) — avoiding negative scores.
-    """
-    return (cosine(a, b) + 1.0) / 2.0

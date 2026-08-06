@@ -18,6 +18,12 @@ Expansions are written to maximise BGE-M3 retrieval signal:
   • Prefer evocative, discriminative phrases over generic fillers
   • Each expansion must pull the vector toward a distinct cluster in the
     embedding space so that user ↔ location cosine distances are meaningful
+  • No proper nouns (place names, brand names, ethnic-group names) in any
+    expansion — tags describe attributes of "big locations", not specific
+    sites, so a single named place should never anchor a tag's vector
+  • Tag keys must stay broad enough to match multiple destinations; a key
+    that realistically applies to only one site belongs merged into a
+    broader neighbour, not as its own entry
 
 ─────────────────────────────────────────────────────────────
 SECTION INDEX
@@ -52,7 +58,7 @@ TERRAIN = {
     "plateau"           : "highland plateau open sky grassland tableland",
     "cliff"             : "sea cliff coastal rock face dramatic drop",
     "cave"              : "cave cavern underground stalactite hidden world",
-    "sand dune"         : "sand dune arid golden landscape shifting Mui Ne",
+    "sand dune"         : "sand dune arid golden landscape shifting coastal desert",
 
     # Lowland & delta
     "delta"             : "river delta flat wetland sediment fertile plain",
@@ -62,8 +68,7 @@ TERRAIN = {
     "rice terrace"      : "terraced rice field hillside cultivation harvest scenic",
     "farm"              : "agricultural farm orchard countryside agro-tourism",
     "flower field"      : "flower meadow blossom field colourful seasonal bloom",
-    "tea plantation"    : "tea plantation terraced hills green harvest Moc Chau Thai Nguyen",
-    "salt field"        : "salt field harvest dawn reflection coastal traditional labor Hon Khoi",
+    "tea plantation"    : "tea plantation terraced hills green highland harvest",
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -120,12 +125,12 @@ SEASON = {
     "dry season"        : "dry season clear skies sunny ideal travel weather",
     "rainy season"      : "rainy season lush green rivers full dramatic",
     "summer trip"       : "summer school holiday hot beach sea swimming",
-    "winter trip"       : "winter cold season frost highland unique Sa Pa",
+    "winter trip"       : "winter cold season frost highland unique",
     "spring trip"       : "spring blossom mild weather comfortable outdoor",
     "autumn trip"       : "autumn harvest golden rice cool comfortable trekking",
 
     # Specific phenomena
-    "snow"              : "snowfall frost winter rare cold mountain Sa Pa Fansipan",
+    "snow"              : "snowfall frost winter rare cold highland mountain",
     "cloud sea"         : "cloud sea fog inversion highland sunrise mystical",
     "flower season"     : "flower blooming season colourful landscape photography",
     "harvest season"    : "harvest season golden rice terrace autumn rural beauty",
@@ -138,31 +143,27 @@ SEASON = {
 CULTURE = {
     # Historical eras & sites
     "history"           : "historical heritage site war ancient dynasty cultural depth",
-    "war history"       : "Vietnam War battlefield bunker tunnel military history memorial",
-    "colonial heritage" : "French colonial architecture villa mansion old quarter",
-    "imperial"          : "imperial citadel royal palace dynastic forbidden city Hue",
-    "royal tomb"        : "royal tomb emperor mausoleum architecture heritage Hue",
-    "cham culture"      : "Cham civilization ancient tower Hindu temple red brick My Son",
+    "war history"       : "war battlefield bunker tunnel military history memorial",
+    "colonial heritage" : "colonial architecture villa mansion old quarter",
+    "imperial"          : "imperial citadel royal palace dynastic forbidden city",
     "prehistoric"       : "prehistoric archaeological ancient cave painting site",
 
     # Religion & spiritual
-    "temple"            : "Hindu Buddhist temple worship incense spiritual ritual",
-    "pagoda"            : "Vietnamese Buddhist pagoda lotus pond bell tower monk",
-    "church"            : "colonial church Catholic cathedral religious architecture",
+    "temple"            : "temple worship incense spiritual ritual devotion",
+    "pagoda"            : "Buddhist pagoda lotus pond bell tower monk",
+    "church"            : "colonial church cathedral religious architecture",
     "meditation"        : "meditation retreat mindfulness silent practice inner peace",
 
     # Ethnic & indigenous
     "ethnic minority"   : "highland ethnic minority tribe indigenous culture village",
     "ethnic village"    : "traditional ethnic minority village homestay customs dress",
     "craft village"     : "traditional craft village artisan pottery lacquer silk weaving",
-    "silk village"      : "silk village weaving traditional textile artisan craft Van Phuc",
 
     # Arts & performance
-    "traditional music" : "traditional music water puppet cai luong folk performance",
-    "water puppet"      : "water puppet show traditional theatre Hanoi folk art performance",
+    "traditional music" : "traditional music water puppet folk performance",
+    "water puppet"      : "water puppet show traditional theatre folk art performance",
     "festival"          : "local festival celebration lantern fire flower crowd ceremony",
     "art"               : "contemporary art gallery creative district exhibition",
-    "lantern festival"  : "lantern festival Hoi An candlelight river romantic glow",
 
     # UNESCO
     "UNESCO heritage"   : "UNESCO world heritage site globally significant protected",
@@ -179,11 +180,9 @@ URBAN = {
     "fishing village"   : "fishing village boat dock morning catch coastal life",
     "market"            : "local market fresh produce commerce noise colour",
     "night market"      : "night market street food stalls lantern bargain buzz",
-    "floating market"   : "floating market Mekong river boat vendor dawn Cai Rang",
-    "ethnic market"     : "ethnic minority market weekend gathering colorful dress highland Bac Ha",
+    "floating market"   : "floating market river boat vendor dawn delta",
     "walking street"    : "pedestrian walking street evening crowd souvenir cafe",
     "rooftop bar"       : "rooftop bar skyline city view cocktail sunset panorama",
-    "coworking"         : "coworking space fast wifi remote work digital nomad hub",
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -195,29 +194,27 @@ ACTIVITIES_LAND = {
     "trekking"          : "multi-day trekking mountain trail jungle endurance rewarding",
     "hiking"            : "day hike trail nature walk scenic viewpoint fitness",
     "motorbiking"       : "motorbike road trip winding pass freedom open road",
-    "motorbike loop"    : "motorbike loop Ha Giang winding pass adventure mountain road trip",
+    "motorbike loop"    : "multi-day motorbike loop winding mountain pass adventure road trip",
     "cycling"           : "cycling bike countryside rural road slow discovery",
     "rock climbing"     : "rock climbing bouldering vertical sport outdoor challenge",
-    "caving"            : "caving spelunking underground dark adventure headlamp",
-    "cave expedition"   : "cave expedition Son Doong Phong Nha giant cavern spelunking extreme",
+    "caving"            : "caving spelunking underground giant cavern dark adventure",
     "canyoning"         : "canyoning waterfall rappel water jump adrenaline gorge",
     "zip lining"        : "zip lining canopy aerial forest fly speed thrill",
     "camping"           : "camping tent outdoor overnight stargazing nature immersion",
     "jeep tour"         : "off-road jeep 4WD rugged terrain highland adventure",
-    "ATV"               : "ATV quad bike off-road sand dune Mui Ne racing fun",
     "train journey"     : "scenic train slow travel railway mountain coastal pass",
-    "night train"       : "night train sleeper cabin reunification express slow journey",
+    "night train"       : "overnight sleeper train cabin slow journey",
     "cyclo"             : "cyclo pedicab city tour slow old quarter colonial streets",
     "photography"       : "landscape photography golden hour composition travel art",
     "shopping"          : "shopping souvenir retail handicraft boutique market",
-    "golf"              : "golf resort course green sport premium leisure Da Nang",
+    "golf"              : "golf resort course green sport premium leisure",
     "trail running"     : "trail running mountain race endurance sport outdoor fitness",
     "scooter tour"      : "scooter tour motorbike passenger city sight exploration",
 
     # Aerial
     "paragliding"       : "paragliding tandem aerial rice terrace mountain valley glide",
     "hot air balloon"   : "hot air balloon sunrise aerial float landscape photography",
-    "cable car"         : "cable car gondola mountain record aerial scenic Ba Na Fansipan",
+    "cable car"         : "cable car gondola mountain record aerial scenic",
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -227,21 +224,16 @@ ACTIVITIES_LAND = {
 ACTIVITIES_WATER = {
     "scuba diving"      : "scuba diving underwater coral fish reef certification depth",
     "snorkeling"        : "snorkeling reef fish mask fins shallow clear water",
-    "seawalk"           : "seawalk underwater walking helmet reef fish close encounter",
     "kayaking"          : "kayaking paddle sea cave lagoon mangrove self-propelled",
     "stand up paddle"   : "stand up paddleboard SUP flat water balance sunrise",
     "surfing"           : "surfing ocean swell wave board sport adrenaline beach",
-    "kitesurfing"       : "kitesurfing wind kite board speed Mui Ne coastal sport",
+    "kitesurfing"       : "kitesurfing wind kite board speed coastal sport",
     "boat cruise"       : "boat cruise scenic waterway overnight luxury sunset",
-    "junk boat"         : "traditional junk boat overnight bay cruise heritage",
-    "basket boat"       : "coracle basket boat traditional fisherman bay",
+    "junk boat"         : "traditional wooden boat overnight bay cruise heritage",
     "speed boat"        : "speed boat fast island transfer coastal excursion",
-    "fishing"           : "fishing boat local catch rod sea experience",
-    "squid fishing"     : "squid night fishing boat lamp sea experience local",
-    "river cruise"      : "river cruise Mekong delta slow boat floating village",
-    "limestone boat ride": "limestone boat ride Trang An Tam Coc rowing sampan karst river",
+    "fishing"           : "fishing boat local catch rod sea night lamp experience",
+    "river cruise"      : "river cruise delta slow boat floating village",
     "rafting"           : "river rafting white water rapids adrenaline jungle",
-    "mud bath"          : "mineral mud bath therapeutic soak relaxation spa Nha Trang",
     "swimming"          : "swimming beach ocean pool refreshing resort leisure",
     "bamboo rafting"    : "bamboo rafting slow river scenic traditional float",
     "waterfall jumping" : "waterfall jump cliff diving deep pool adventure",
@@ -254,26 +246,22 @@ ACTIVITIES_WATER = {
 ACTIVITIES_LEISURE = {
     # Wellness
     "spa"               : "luxury spa massage body treatment relaxation resort pampering",
-    "herbal bath"       : "traditional herbal bath Dao red medicinal plant highland detox",
     "yoga retreat"      : "yoga retreat morning practice wellness mindful beach mountain",
     "wellness retreat"  : "wellness retreat holistic healing detox rejuvenate resort",
     "hot spring bath"   : "natural hot spring thermal soak mineral outdoor relaxation",
 
     # Cultural learning
-    "cooking class"     : "Vietnamese cooking class recipe local market ingredient hands-on",
-    "pottery class"     : "pottery class artisan wheel clay craft traditional village",
-    "lantern making"    : "lantern making craft workshop Hoi An silk frame traditional",
+    "cooking class"     : "cooking class recipe local market ingredient hands-on",
     "farm tour"         : "agro farm tour pick fruit vegetable rural sustainable food",
     "tea tasting"       : "tea tasting highland plantation ceremony ritual flavor",
-    "coffee tour"       : "coffee plantation tour tasting Central Highlands local brew",
+    "coffee tour"       : "coffee plantation tour tasting highland local brew",
     "cultural show"     : "cultural performance folk dance ethnic show traditional costume",
 
     # Family & recreation
-    "theme park"        : "amusement theme park rides family fun VinWonders entertainment",
+    "theme park"        : "amusement theme park rides family fun entertainment",
     "water park"        : "water park slides pool wave aquatic family leisure",
     "picnic"            : "picnic lakeside meadow relaxed outdoor leisure casual",
     "night tour"        : "night tour city illuminated ghost history lantern atmospheric",
-    "martial arts class": "martial arts class Vovinam Tai Chi traditional defense sport",
     "volunteering"      : "volunteer community work social impact giving back",
 }
 
@@ -287,27 +275,21 @@ FOOD = {
     "local cuisine"     : "regional local dish specialty home cooking traditional recipe",
     "fine dining"       : "fine dining upscale restaurant tasting menu elegant chef",
     "food tour"         : "guided food tour tasting multiple stops culinary discovery",
-    "royal cuisine"     : "imperial royal court cuisine elaborate refined Hue heritage",
-
-    # Iconic Dishes & Ingredients
-    "pho"               : "pho noodle soup beef chicken broth national dish breakfast",
-    "banh mi"           : "banh mi baguette sandwich street food iconic quick bite",
-    "fish sauce"        : "fish sauce factory barrel traditional fermentation Phu Quoc Phan Thiet",
+    "royal cuisine"     : "imperial court cuisine elaborate refined heritage",
 
     # Dietary
     "seafood"           : "fresh seafood grilled crab prawn squid coastal feast",
-    "vegetarian"        : "vegetarian plant-based friendly menu Buddhist temple food",
+    "vegetarian"        : "vegetarian plant-based friendly menu temple food",
     "vegan"             : "vegan whole-food plant-based no animal product menu",
     "halal"             : "halal certified Muslim friendly food prayer facility",
     "organic"           : "organic farm-to-table clean food sustainable healthy",
 
     # Drinks
-    "coffee"            : "Vietnamese coffee phin drip ca phe trung egg cafe culture",
-    "street coffee"     : "street coffee sidewalk iced milk tea ca phe sua da local morning",
-    "craft beer"        : "craft beer local microbrewery bia hoi social sidewalk",
-    "bia hoi"           : "bia hoi fresh draft beer corner street local gathering cheap Hanoi",
-    "tropical fruit"    : "exotic tropical fruit market taste fresh seasonal Vietnam",
-    "local wine"        : "local rice wine ruou traditional fermented highland spirits",
+    "coffee"            : "coffee culture drip iced milk sidewalk cafe morning ritual",
+    "craft beer"        : "craft beer local microbrewery social sidewalk",
+    "bia hoi"           : "fresh draft beer corner street local gathering cheap",
+    "tropical fruit"    : "exotic tropical fruit market taste fresh seasonal",
+    "local wine"        : "local rice wine traditional fermented highland spirits",
     "tea"               : "highland tea plantation artisan green oolong ceremony taste",
 }
 
@@ -320,7 +302,6 @@ VIBE = {
     "peaceful"          : "peaceful serene quiet undisturbed calm retreat nature",
     "vibrant"           : "vibrant energetic buzzing lively social dynamic city",
     "chill"             : "chill laid-back slow afternoon hammock no rush",
-    "slow travel"       : "slow travel immersive linger community local rhythm",
 
     # Emotional tone
     "romantic"          : "romantic intimate couple sunset candle private getaway",
@@ -334,7 +315,7 @@ VIBE = {
     "rustic"            : "rustic simple bare honest wooden earthy primitive genuine",
     "picturesque"       : "picturesque postcard view stunning landscape photo worthy",
     "bohemian"          : "bohemian artistic creative independent eclectic traveller",
-    "instagrammable"    : "photogenic Instagram iconic visual stunning selfie landmark",
+    "instagrammable"    : "photogenic iconic visual stunning selfie landmark",
     "modern"            : "modern sleek contemporary urban architecture design",
 
     # Discovery type
@@ -362,11 +343,11 @@ TRIP_PROFILE = {
     "family"            : "family children friendly safe activities pool easy access",
     "group"             : "group travel social shared tour activities crowd fun",
     "friends trip"      : "friends group party social nightlife activities adventure",
-    "corporate"         : "corporate team building MICE incentive event meeting",
+    "corporate"         : "corporate team building incentive event meeting",
 
     # Pace
     "backpacking"       : "budget backpacker hostel flexible schedule low cost explore",
-    "slow travel"       : "slow immersive long stay local rhythm community daily life",
+    "slow travel"       : "slow travel immersive long stay local rhythm community daily life",
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -382,7 +363,6 @@ BUDGET = {
     "eco lodge"         : "eco lodge sustainable forest nature immersive low impact",
     "resort"            : "beach resort pool spa all-inclusive leisure facility",
     "glamping"          : "glamping luxury tent outdoor comfort nature premium camping",
-    "camping"           : "camping tent basic outdoor stars remote self-sufficient",
     "pet friendly"      : "pet friendly dog cat welcome accommodation travel",
     "wheelchair accessible" : "wheelchair accessible disabled friendly easy mobility",
 }
@@ -397,7 +377,7 @@ SPECIAL_INTEREST = {
     "medical tourism"   : "medical tourism health check dental procedure hospital international",
     "wellness tourism"  : "wellness holistic spa yoga herbal healing rejuvenation retreat",
     "culinary tourism"  : "culinary food-focused trip market class tasting regional dish",
-    "MICE"              : "MICE meeting incentive conference exhibition business event venue",
+    "MICE"              : "meeting incentive conference exhibition business event venue",
     "digital nomad"     : "digital nomad remote worker long stay coworking wifi cafe coliving",
     "war tourism"       : "war memorial battlefield tunnel history veteran emotional heritage",
     "religious tourism" : "pilgrimage temple pagoda church sacred festival devotion",
