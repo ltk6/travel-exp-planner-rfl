@@ -1,21 +1,21 @@
-﻿# --- Model Execution ---
-sentence-transformers
-torch
-torchvision
-transformers
-accelerate
+# --- Model Execution ---
+torch>=2.7.0,<2.8.0
+torchvision>=0.22.0,<0.23.0
+accelerate>=1.9.0
+transformers>=4.54.0
+sentence-transformers==5.0.0
 
 # --- Tokenization (Required for BGE-M3 / multilingual models) ---
-sentencepiece
-protobuf
+sentencepiece>=0.2.0
+protobuf>=4.21.0
 
 # --- HuggingFace / Model Hub ---
-huggingface-hub
-hf-xet
-hf_transfer
+huggingface-hub>=0.28.0
+hf-xet>=0.1.0
+hf_transfer>=0.1.8
 
 # --- Safety / Serialization ---
-safetensors
+safetensors>=0.5.0
 
 # --- Performance (optional but useful for large embedding batches) ---
-faiss-cpu
+faiss-cpu>=1.9.0

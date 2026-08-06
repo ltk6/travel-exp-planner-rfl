@@ -13,23 +13,28 @@ N1 is the semantic entry point for the retrieval pipeline. It takes raw user or 
 
 ```
 backend/modules/n1_embedding/
-├── __init__.py      # Public API: embed() and embed_batch()
+├── pipeline.py      # Public API: embed(), embed_batch(), light_embed(), light_embed_batch()
 ├── embedder.py      # SentenceTransformer wrapper, model singleton, embed_strings()
 ├── preprocessor.py  # Text expansion, tag ontology lookup, channel string construction
+├── config.py
+├── schemas.py
 └── requirements.txt
 ```
 
 ## Public API
 
 ```python
-from modules.n1_embedding import embed, embed_batch
-from backend.shared.contracts.n1_contracts import N1EmbedInput
+from modules.n1_embedding import embed, embed_batch, light_embed, light_embed_batch
+from modules.n1_embedding.schemas import N1EmbedInput
 
 embed(data: Union[N1EmbedInput, dict]) -> dict
 embed_batch(data_list: list[Union[N1EmbedInput, dict]]) -> list[dict]
+
+light_embed(data: Union[N1EmbedInput, dict], task_type: str = "passage") -> dict
+light_embed_batch(data_list: list[Union[N1EmbedInput, dict]], task_type: str = "passage") -> list[dict]
 ```
 
-`embed()` is a thin wrapper over `embed_batch([data])`. Both functions enforce Pydantic V2 validation at the module boundary.
+`embed()` and `light_embed()` are thin wrappers over their respective `_batch([data])` functions. All functions enforce Pydantic V2 validation at the module boundary.
 
 ---
 
@@ -109,8 +114,10 @@ This ensures exactly one GPU/CPU forward pass regardless of batch size.
 
 ## Runtime Notes
 
-- Model: `BAAI/bge-m3` via `config.EMBEDDING_MODEL_NAME`
+- Models are configured in `modules/n1_embedding/config.py`:
+  - Default Model: `BAAI/bge-m3` via `config.EMBEDDING_MODEL_NAME`
+  - Light Model: `intfloat/multilingual-e5-small` via `config.LIGHT_EMBEDDING_MODEL_NAME`
 - Embeddings are generated with `normalize_embeddings=True` (unit vectors for cosine similarity)
 - Empty strings produce `None` vectors, preserved structurally in the output
-- The model is loaded once as a module-level singleton via `embedder.get_model()`
+- The models are loaded once as module-level singletons via `embedder.get_model()` and `embedder.get_light_model()`
 - Device (CPU/GPU) is detected automatically and reported in metadata

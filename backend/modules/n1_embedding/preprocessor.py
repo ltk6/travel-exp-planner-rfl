@@ -22,10 +22,9 @@ Output:
 """
 
 from __future__ import annotations
-
 from typing import NamedTuple
 
-from backend.shared.maps import ALL_CONTEXT, ALL_EMOTIONS, ALL_TAGS
+from .maps import ALL_CONTEXT, ALL_EMOTIONS, ALL_TAGS
 
 
 # ────────────────────────────────────────────────────────────
