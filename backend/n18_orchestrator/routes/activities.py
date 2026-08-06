@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+import time
 
 from backend.modules.n1_embedding.schemas import N1EmbedInput
 
@@ -56,16 +57,19 @@ def _build_enriched_activity(ra: dict, original: dict, fallback_loc_id: str) -> 
 
 # ── Service logic ─────────────────────────────────────────────────────────────
 
-def activities_service(body: dict) -> dict:
+def activities_service(request: Request, body: dict) -> dict:
     text     = body.get("text", "").strip()
     img_desc = body.get("img_desc", "")
     tags     = body.get("tags", [])
     location = body.get("location", {})
     top_k    = int(body.get("top_k_activities", TOP_K_ACTIVITIES))
+    stage_lats = request.state.stage_latencies
 
     # ── N1 — Embed user query ─────────────────────────────────────────────────
     logger.info("N18 — Embedding user query via N1 Light...")
+    _t0 = time.time()
     bge_result = light_embed(N1EmbedInput(text=text, tags=tags, img_desc=img_desc))
+    stage_lats["N1_light_query"] = int((time.time() - _t0) * 1000)
 
     text_k   = bge_result.get("text_k", 0)
     tags_k   = bge_result.get("tags_k", 0)
@@ -79,6 +83,7 @@ def activities_service(body: dict) -> dict:
 
     # ── N5 — Generate activities ──────────────────────────────────────────────
     loc_meta_raw = location.get("metadata", {}) or {}
+    _t0 = time.time()
     n5_result = generate_activities(N5GenerateInput(
         user=N5UserInput(text=text, tags=tags, img_desc=img_desc),
         locations=[N5LocationItem(
@@ -90,11 +95,9 @@ def activities_service(body: dict) -> dict:
             ),
         )],
     ))
-    raw_activities = n5_result.get("activities", [])
+    stage_lats["N5"] = int((time.time() - _t0) * 1000)
+    activities = n5_result.get("activities", [])
     per_loc_meta   = n5_result.get("metadata", {}).get("per_location", [])
-
-    # Since we are relying solely on N5, the raw activities are already normalized by N5's pipeline.
-    activities = raw_activities
 
     # ── N1 batch — Embed generated activities ─────────────────────────────────
     logger.info("N18 — Embedding %d activities via N1 Light...", len(activities))
@@ -106,11 +109,14 @@ def activities_service(body: dict) -> dict:
         )
         for a in activities
     ]
+    _t0 = time.time()
     bge_results = light_embed_batch(n1_batch, task_type="passage")
+    stage_lats["N1_light_batch"] = int((time.time() - _t0) * 1000)
     for i, act in enumerate(activities):
         act["vectors"] = bge_results[i].get("vectors")
 
     # ── N6 — Rank activities ──────────────────────────────────────────────────
+    _t0 = time.time()
     n6_result = rank_activities(N6RankInput(
         text_k=text_k, tags_k=tags_k,
         user_input=UserInput(text=text, tags=tags, img_desc=img_desc),
@@ -118,6 +124,7 @@ def activities_service(body: dict) -> dict:
         activities=activities,
         top_k=top_k,
     ))
+    stage_lats["N6"] = int((time.time() - _t0) * 1000)
     ranked = n6_result.get("activities", [])
 
     act_map = {a["activity_id"]: a for a in activities}
@@ -135,22 +142,25 @@ def activities_service(body: dict) -> dict:
     }
 
 
-def feedback_activities_service(body: dict) -> dict:
+def feedback_activities_service(request: Request, body: dict) -> dict:
     old_text     = body.get("text", "")
     old_tags     = body.get("tags", [])
     old_img_desc = body.get("img_desc", "")
     feedback     = body.get("feedback", "")
+    stage_lats = request.state.stage_latencies
 
     if not feedback:
-        return activities_service(body)
+        return activities_service(request, body)
 
     logger.info("N17 — Processing activity feedback: '%s'", feedback)
+    _t0 = time.time()
     refined = process_feedback(N17FeedbackInput(
         user_input=old_text,
         user_tags=old_tags,
         img_desc=old_img_desc,
         feedback_text=feedback,
     ))
+    stage_lats["N17"] = int((time.time() - _t0) * 1000)
 
     refined_text = refined.get("refined_text", "")
     refined_tags = refined.get("refined_tags", [])
@@ -173,7 +183,7 @@ def feedback_activities_service(body: dict) -> dict:
         "tags":     refined_tags if refined_tags else old_tags,
         "img_desc": refined_img_desc if refined_img_desc else old_img_desc,
     }
-    result = activities_service(new_body)
+    result = activities_service(request, new_body)
     result["refined"] = {
         "text":        new_body["text"],
         "tags":        new_body["tags"],
@@ -186,22 +196,22 @@ def feedback_activities_service(body: dict) -> dict:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @activities_router.post("/activities")
-async def get_activities(body: dict) -> dict:
+async def get_activities(request: Request, body: dict) -> dict:
     if not body.get("location"):
         err("Missing location data")
     try:
-        return activities_service(body)
+        return activities_service(request, body)
     except Exception as exc:
         logger.error("Activities service failed: %s", exc)
         err(str(exc), 500)
 
 
 @activities_router.post("/feedback/activities")
-async def feedback_activities(body: dict) -> dict:
+async def feedback_activities(request: Request, body: dict) -> dict:
     if not body.get("feedback"):
         err("Missing feedback text")
     try:
-        return feedback_activities_service(body)
+        return feedback_activities_service(request, body)
     except Exception as exc:
         logger.error("Feedback activities failed: %s", exc)
         err(str(exc), 500)

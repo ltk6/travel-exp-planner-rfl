@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import base64
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+import time
 
 from backend.modules.n1_embedding.schemas import N1EmbedInput
 from backend.modules.n2_image_processing.schemas import N2ImageInput
@@ -20,7 +21,7 @@ from backend.n18_orchestrator.services import (
     get_all_locations_cached,
     get_image_urls,
 )
-from backend.shared.weights import get_weights
+from backend.shared.weights.weights import get_weights
 logger = setup_logging("N18.recommend")
 
 locations_router = APIRouter()
@@ -28,12 +29,14 @@ locations_router = APIRouter()
 
 # ── Service logic ─────────────────────────────────────────────────────────────
 
-def recommend_service(body: dict) -> dict:
+def recommend_service(request: Request, body: dict) -> dict:
     text = body.get("text", "").strip()
     tags = body.get("tags", [])
     constraints = body.get("constraints", {})
     context_data = body.get("context", {})
     top_k = int(body.get("top_k_locations", TOP_K_LOCATIONS))
+    
+    stage_lats = request.state.stage_latencies
 
     logger.info("N18 — Starting recommendation flow (text='%s', tags=%s)", text, tags)
 
@@ -52,7 +55,9 @@ def recommend_service(body: dict) -> dict:
                 logger.info("N18 — Base64 image detected. Processing via N2...")
                 b64_data = image_b64.split(",")[1] if "," in image_b64 else image_b64
                 img_bytes = base64.b64decode(b64_data)
+                _t0 = time.time()
                 n2_result = process_image(N2ImageInput(image=img_bytes))
+                stage_lats["N2"] = int((time.time() - _t0) * 1000)
                 img_desc = n2_result.get("img_desc", "")
                 logger.info("N18 — N2 complete. img_desc='%s'", img_desc)
             except Exception as exc:
@@ -60,7 +65,9 @@ def recommend_service(body: dict) -> dict:
 
     # ── N1 — Build user vectors ───────────────────────────────────────────────
     logger.info("N18 — Embedding user query via N1 (BGE-M3)...")
+    _t0 = time.time()
     n1_result = embed(N1EmbedInput(text=text, tags=tags, img_desc=img_desc))
+    stage_lats["N1"] = int((time.time() - _t0) * 1000)
 
     text_k = n1_result.get("text_k", 0)
     tags_k = n1_result.get("tags_k", 0)
@@ -73,7 +80,9 @@ def recommend_service(body: dict) -> dict:
     }
 
     # ── N3 — Fetch locations ──────────────────────────────────────────────────
+    _t0 = time.time()
     locations = get_all_locations_cached()
+    stage_lats["N3"] = int((time.time() - _t0) * 1000)
     logger.info("N18 — Retrieved %d location candidates from N3 cache.", len(locations))
 
     # ── N4 — Rank locations ───────────────────────────────────────────────────
@@ -81,6 +90,7 @@ def recommend_service(body: dict) -> dict:
     for loc in locations:
         loc["location_vectors"] = loc.get("vectors")
 
+    _t0 = time.time()
     n4_result = rank_locations(N4RankInput(
         text_k=text_k,
         tags_k=tags_k,
@@ -88,6 +98,7 @@ def recommend_service(body: dict) -> dict:
         locations=locations,
         top_k=top_k,
     ))
+    stage_lats["N4"] = int((time.time() - _t0) * 1000)
     ranked = n4_result.get("locations", [])
 
     # ── Enrich ranked results ─────────────────────────────────────────────────
@@ -138,22 +149,25 @@ def recommend_service(body: dict) -> dict:
     return response
 
 
-def feedback_recommend_service(body: dict) -> dict:
+def feedback_recommend_service(request: Request, body: dict) -> dict:
     old_text = body.get("text", "")
     old_tags = body.get("tags", [])
     old_img_desc = body.get("img_desc", "")
     feedback = body.get("feedback", "")
+    stage_lats = request.state.stage_latencies
 
     if not feedback:
-        return recommend_service(body)
+        return recommend_service(request, body)
 
     logger.info("N18 (N17) — Processing recommend feedback: '%s'", feedback)
+    _t0 = time.time()
     refined = process_feedback(N17FeedbackInput(
         user_input=old_text,
         user_tags=old_tags,
         img_desc=old_img_desc,
         feedback_text=feedback,
     ))
+    stage_lats["N17"] = int((time.time() - _t0) * 1000)
 
     refined_text = refined.get("refined_text", "")
     refined_tags = refined.get("refined_tags", [])
@@ -176,7 +190,7 @@ def feedback_recommend_service(body: dict) -> dict:
         "img_desc": refined_img_desc if refined_img_desc else old_img_desc,
     }
     logger.info("N18 (N17) — Refined. text='%s', tags=%s", new_body["text"], new_body["tags"])
-    result = recommend_service(new_body)
+    result = recommend_service(request, new_body)
     result["refined"] = {
         "text":        new_body["text"],
         "tags":        new_body["tags"],
@@ -189,22 +203,22 @@ def feedback_recommend_service(body: dict) -> dict:
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @locations_router.post("/locations")
-async def recommend(body: dict) -> dict:
+async def recommend(request: Request, body: dict) -> dict:
     if not any(body.get(k) for k in ("text", "tags", "image", "images", "img_desc")):
         err("Provide text, tags, or image")
     try:
-        return recommend_service(body)
+        return recommend_service(request, body)
     except Exception as exc:
         logger.error("Recommend service failed: %s", exc)
         err(str(exc), 500)
 
 
 @locations_router.post("/feedback/locations")
-async def feedback_recommend(body: dict) -> dict:
+async def feedback_recommend(request: Request, body: dict) -> dict:
     if not body.get("feedback"):
         err("Missing feedback text")
     try:
-        return feedback_recommend_service(body)
+        return feedback_recommend_service(request, body)
     except Exception as exc:
         logger.error("Feedback recommend failed: %s", exc)
         err(str(exc), 500)

@@ -51,12 +51,11 @@ Unlike N8 which spawned a background thread, N18 heavily utilizes lazy loading t
 | `/health` | GET | No | Service status and runtime info |
 | `/recommend` | POST | Yes | Full recommendation workflow |
 | `/activities` | POST | No | Generate + rank activities via N5 LLM |
-| `/activities/v2` | POST | No | DB-backed activities from N9–N14 providers |
 | `/locations` | GET | No | Slim location list for Explore mode |
 | `/api/images/<filename>` | GET | No | Lazy-serve location images |
 | `/cache/reset` | POST | Yes | Force cache refresh from N3 |
 | `/cache/fingerprint` | GET | Yes | Return current DB version fingerprint |
-| `/feedback/recommend` | POST | Yes | Refine recommendation with user feedback |
+| `/feedback/locations` | POST | Yes | Refine recommendation with user feedback |
 | `/feedback/activities` | POST | Yes | Refine activity list with user feedback |
 | `/api/auth/register` | POST | No | Register new user account |
 | `/api/auth/login` | POST | No | Log in and return user_id |
@@ -81,7 +80,7 @@ Requests missing or supplying an incorrect key are rejected with `401 Unauthoriz
 
 For `POST` requests, N18 computes a SHA-256 fingerprint of `{path}:{sorted JSON body}` via FastAPI middleware. If an identical request is already in flight, the duplicate is rejected with `409 Conflict`. This prevents double-submissions from the frontend during slow AI calls.
 
-Excluded from deduplication: `/cache/reset`, `/feedback/recommend`, `/feedback/activities`.
+Excluded from deduplication: `/cache/reset`, `/feedback/locations`, `/feedback/activities`.
 
 ### Per-Endpoint Input Rules
 
@@ -89,8 +88,7 @@ Excluded from deduplication: `/cache/reset`, `/feedback/recommend`, `/feedback/a
 |---|---|
 | `/recommend` | At least one of: `text`, `tags`, `image`, `images`, `img_desc` |
 | `/activities` | `location` |
-| `/activities/v2` | `location` (with `location_id`) |
-| `/feedback/recommend` | `feedback` |
+| `/feedback/locations` | `feedback` |
 | `/feedback/activities` | `feedback` |
 
 ---
@@ -133,24 +131,8 @@ Legacy pipeline — calls **N5** (LLM) to generate activities on every request:
 6. Rank via **N6** (cosine + attribute scoring)
 7. Enrich ranked activities with full metadata before returning
 
----
 
-## Workflow: Activities v2 (`/activities/v2`)
-
-DB-backed pipeline — uses pre-seeded activities from providers (N9–N14):
-
-1. Read activities already stored in PostgreSQL for the requested `location_id`
-2. **If DB count < 3** (sparse / not yet seeded) → fall back to **N5 LLM** generation + embed + merge
-3. Embed any activities missing vectors via **N1** batch
-4. If `user_vectors` not provided or dimension mismatch → re-embed user input via **N1**
-5. Rank via **N6**
-6. Return enriched activities with source/provider metadata
-
-The `meta` field in the response indicates `provider_used` (e.g. `n9-n14_db+n5_fallback`), `fallback_used`, and `latency_ms`.
-
----
-
-## Workflow: Feedback (`/feedback/recommend` and `/feedback/activities`)
+## Workflow: Feedback (`/feedback/locations` and `/feedback/activities`)
 
 Pattern is identical for both feedback endpoints:
 
@@ -199,10 +181,9 @@ Cache validity is checked by comparing the stored fingerprint against `N3.get_db
 
 | Field | Present in |
 |---|---|
-| `locations` | `/recommend`, `/feedback/recommend` |
-| `activities` | `/activities`, `/activities/v2`, `/feedback/activities` |
-| `meta` | `/activities/v2` — provider info and latency |
-| `ranking_meta` | `/activities`, `/activities/v2` — N6 metadata |
+| `locations` | `/locations`, `/feedback/locations` |
+| `activities` | `/activities`, `/feedback/activities` |
+| `ranking_meta` | `/activities` — N6 metadata |
 | `refined` | Any feedback endpoint — what N17 changed |
 | `trace` | `/recommend` when `API_DEBUG=true` |
 
