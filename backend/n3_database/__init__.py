@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from .db_manager import (
-    attach_image_to_location,
     get_all_locations,
     get_db_fingerprint,
     init_db,
@@ -17,7 +16,6 @@ from .db_manager import (
 )
 
 __all__ = [
-    "attach_image_to_location",
     "get_all_locations",
     "get_db_fingerprint",
     "init_db",

@@ -1,13 +1,11 @@
 # N3 Database Module
 
-N3 is the unified persistence layer. It manages four data domains: location records, provider-sourced activities, user authentication, and recommendation history. All data is stored in PostgreSQL using `pgvector` for vector columns and JSONB for flexible payloads.
+N3 is the unified persistence layer. It manages three data domains: location records, user authentication, and recommendation history. All data is stored in PostgreSQL using `pgvector` for vector columns and JSONB for flexible payloads.
 
 ## Responsibilities
 
 - Initialize all PostgreSQL schemas and required extensions
 - Store and retrieve location vectors, metadata, geo, and images
-- Store and retrieve activities from 6 external provider tables
-- Track per-provider fetch status per location
 - Manage user account registration and login
 - Persist and retrieve full recommendation history per user
 - Expose a lightweight database fingerprint for cache or sync checks
@@ -35,7 +33,6 @@ save_location(location_data: dict[str, Any]) -> dict[str, Any]
 get_all_locations(include_images: bool = True) -> dict[str, Any]
 get_db_fingerprint() -> str
 get_location_image_by_index(location_id: str, idx: int) -> bytes | None
-attach_image_to_location(location_dict: dict[str, Any]) -> dict[str, Any]
 ```
 
 ### Storage Schema
@@ -119,72 +116,9 @@ class N3GetLocationsOutput(BaseModel):
 }
 ```
 
----
 
-## Domain 2: Activities
 
-N3 stores activities from 6 external providers: `osm`, `goong`, `foursquare`, `overture`, `wikidata`, `geoapify`. Each provider has its own table (`activities_<provider>`) and a shared `activity_fetch_status` tracker.
-
-### Public API
-
-```python
-init_activities_db(drop_existing: bool = False) -> None
-save_activities_batch(provider: str, activities: list[dict]) -> int
-get_activities_for_location(location_id: str, providers: list[str] | None = None, include_vectors: bool = True) -> list[dict]
-mark_fetch_status(location_id: str, provider: str, status: str, item_count: int = 0, error_msg: str | None = None) -> None
-get_fetch_status_map(location_id: str) -> dict[str, dict]
-count_activities_by_provider(location_id: str | None = None) -> dict[str, int]
-```
-
-### Storage Schema
-
-Six `activities_<provider>` tables:
-
-| Column | Type |
-|---|---|
-| `activity_id` | `VARCHAR(255) PK` |
-| `location_id` | `VARCHAR(255)` |
-| `metadata`, `place`, `signals` | `JSONB` |
-| `vec_text`, `vec_tag` | `vector(1024)` |
-| `quality_score` | `REAL` |
-| `source` | `VARCHAR(32)` |
-| `retrieved_at`, `embedded_at` | `TIMESTAMP` |
-| `enriched` | `BOOLEAN` |
-
-`activity_fetch_status` table: `(location_id, provider)` primary key tracking status per provider.
-
-### Contracts
-
-```python
-class N3ActivityVectors(BaseModel):
-    text: Optional[List[float]] = None
-    tag: Optional[List[float]] = None
-
-class N3ActivityItem(BaseModel):
-    activity_id: Optional[str] = None
-    location_id: Optional[str] = None
-    source: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    place: Dict[str, Any] = Field(default_factory=dict)
-    signals: Dict[str, Any] = Field(default_factory=dict)
-    quality_score: Optional[float] = None
-    enriched: Optional[bool] = None
-    vectors: Optional[N3ActivityVectors] = None
-
-class N3FetchStatus(BaseModel):
-    status: Optional[str] = None
-    item_count: Optional[int] = 0
-    fetched_at: Optional[str] = None
-    error_msg: Optional[str] = None
-```
-
-- `save_activities_batch` returns the number of successfully upserted rows
-- `get_fetch_status_map` returns `{provider: N3FetchStatus}` — providers with no row are absent (= not yet fetched)
-- `status` values for `mark_fetch_status`: `success`, `empty`, `error`, `rate_limited`, `no_key`
-
----
-
-## Domain 3: User Authentication
+## Domain 2: User Authentication
 
 ### Public API
 
@@ -229,7 +163,7 @@ class N3AuthOutput(BaseModel):
 
 ---
 
-## Domain 4: Recommendation History
+## Domain 3: Recommendation History
 
 ### Public API
 
@@ -286,6 +220,6 @@ class N3GetHistoryOutput(BaseModel):
 N3 also includes a seed-ingestion helper in [`seeds/add_more_locs/`](seeds/add_more_locs/README.md).
 
 - It embeds new locations through N1 before saving them
-- It updates `seed_data.py`, `locations_with_vectors.json`, `seeds/raw_imgs/`, and `seeds/images/`
+- It updates `locations.json`, `locations_with_vectors.json`, `seeds/raw_imgs/`, and `seeds/images/`
 - It saves the final record into PostgreSQL using resized image bytes from `seeds/images/`
 - It asks for confirmation before deleting source JSON/image files after a successful import

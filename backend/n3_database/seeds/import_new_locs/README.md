@@ -8,10 +8,10 @@ This folder contains the ingestion helper for adding new locations into the N3 s
 
 1. Validates the JSON structure.
 2. Rejects duplicate `location_id` values that already exist in:
-   - `seed_data.py`
+   - `locations.json`
    - `locations_with_vectors.json`
 3. Generates embeddings through N1.
-4. Appends the raw location into `seed_data.py`.
+4. Appends the raw location into `locations.json`.
 5. Appends the embedded location into `locations_with_vectors.json`.
 6. Copies the paired source image into `backend/n3_database/seeds/raw_imgs/`.
 7. Resizes/crops that image into `backend/n3_database/seeds/images/`.
@@ -50,6 +50,6 @@ python backend/n3_database/seeds/add_more_locs/importer.py
 
 ## Notes
 
-- The importer modifies core seed artifacts: `seed_data.py`, `locations_with_vectors.json`, and `seeds/images/`.
+- The importer modifies core seed artifacts: `locations.json`, `locations_with_vectors.json`, and `seeds/images/`.
 - The importer also maintains `seeds/raw_imgs/` so the raw and resized image stores stay in sync.
 - If the import succeeds, the script will ask whether you want to delete the source JSON/image files from `add_more_locs/`.

@@ -14,9 +14,10 @@ PROJECT_ROOT = CURRENT_DIR.parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from backend.n3_database.db_manager import init_db, save_location, init_profile_db, init_activities_db
+from backend.n3_database.db_manager import init_db, save_location, init_profile_db
 
-def seed_database(reset_locations: bool = True, reset_activities: bool = False, reset_profiles: bool = False):
+
+def seed_database(reset_locations: bool = False, reset_profiles: bool = False):
     json_path = CURRENT_DIR / "locations_with_vectors.json"
     image_dir = CURRENT_DIR / "images"
     
@@ -30,7 +31,6 @@ def seed_database(reset_locations: bool = True, reset_activities: bool = False, 
     # 1. Khởi tạo / reset các sub-schema
     init_db(drop_existing=reset_locations)
     init_profile_db(drop_existing=reset_profiles)
-    init_activities_db(drop_existing=reset_activities)
     
     print(f"🚀 Seeding {len(locations)} locations with images into Postgres...")
     
@@ -59,12 +59,12 @@ def seed_database(reset_locations: bool = True, reset_activities: bool = False, 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Seed the database with locations, vectors, and initialize schemas.")
-    parser.add_argument("--reset-activities", action="store_true", help="Drop and recreate all activity tables")
+    parser.add_argument("--reset-locations", action="store_true", help="Drop and recreate the locations table")
     parser.add_argument("--reset-profiles", action="store_true", help="Drop and recreate user and rec_history tables (DANGEROUS)")
-    parser.add_argument("--reset-all", action="store_true", help="Drop and recreate EVERYTHING (locations, activities, profiles)")
+    parser.add_argument("--reset-all", action="store_true", help="Drop and recreate EVERYTHING (locations, profiles)")
     args = parser.parse_args()
     
-    r_act = args.reset_activities or args.reset_all
+    r_loc = args.reset_locations or args.reset_all
     r_prof = args.reset_profiles or args.reset_all
     
-    seed_database(reset_locations=True, reset_activities=r_act, reset_profiles=r_prof)
+    seed_database(reset_locations=r_loc, reset_profiles=r_prof)

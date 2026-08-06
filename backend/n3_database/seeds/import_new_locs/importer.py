@@ -16,9 +16,8 @@ from backend.n3_database.db_manager import save_location
 from backend.modules.n1_embedding import embed_batch
 from backend.n3_database.seeds.image_resizer import resize_and_crop
 
-SEED_PATH = PROJECT_ROOT / "backend/n3_database/seeds/seed_data.py"
+SEED_PATH = PROJECT_ROOT / "backend/n3_database/seeds/locations.json"
 VECTORS_JSON_PATH = PROJECT_ROOT / "backend/n3_database/seeds/locations_with_vectors.json"
-RAW_IMAGE_DIR = PROJECT_ROOT / "backend/n3_database/seeds/raw_imgs"
 SEED_IMAGE_DIR = PROJECT_ROOT / "backend/n3_database/seeds/images"
 SKIP_FILES = {"example.json", "new_location.json"}
 IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"]
@@ -64,17 +63,15 @@ class FileTransaction:
 
 def _load_seed_content() -> str:
     if not SEED_PATH.exists():
-        raise FileNotFoundError(f"seed_data.py not found at {SEED_PATH}")
+        raise FileNotFoundError(f"locations.json not found at {SEED_PATH}")
     return SEED_PATH.read_text(encoding="utf-8")
 
 
 def _load_seed_locations() -> list[dict]:
-    namespace: dict[str, object] = {}
-    content = _load_seed_content()
-    exec(compile(content, str(SEED_PATH), "exec"), namespace)
-    locations = namespace.get("LOCATIONS")
+    with open(SEED_PATH, "r", encoding="utf-8") as f:
+        locations = json.load(f)
     if not isinstance(locations, list):
-        raise ValueError("LOCATIONS was not found or is not a list in seed_data.py")
+        raise ValueError("locations.json does not contain a list")
     return locations
 
 
@@ -111,7 +108,7 @@ def _ensure_location_is_new(location_id: str) -> None:
     seed_locations = _load_seed_locations()
     if any(loc.get("location_id") == location_id for loc in seed_locations):
         raise ValueError(
-            f"location_id '{location_id}' already exists in seed_data.py. "
+            f"location_id '{location_id}' already exists in locations.json. "
             "This importer only supports adding new locations."
         )
 
@@ -124,17 +121,9 @@ def _ensure_location_is_new(location_id: str) -> None:
 
 
 def _append_to_seed_data_py(new_loc: dict, txn: FileTransaction) -> None:
-    content = _load_seed_content()
-    existing_locations = _load_seed_locations()
-    last_bracket_idx = content.rfind("]")
-    if last_bracket_idx == -1:
-        raise ValueError("Could not find closing LOCATIONS bracket in seed_data.py")
-
-    formatted_loc = indent(pformat(new_loc, width=100, sort_dicts=False), "    ")
-    prefix = ",\n\n" if existing_locations else "\n"
-    new_entry = prefix + formatted_loc
-    new_content = content[:last_bracket_idx].rstrip() + new_entry + "\n]"
-    txn.write_text(SEED_PATH, new_content)
+    locations = _load_seed_locations()
+    locations.append(new_loc)
+    txn.write_text(SEED_PATH, json.dumps(locations, ensure_ascii=False, indent=4))
 
 
 def _build_vectors_json_payload(embedded_loc: dict) -> dict:
@@ -162,10 +151,6 @@ def _find_source_image(json_path: Path) -> Path | None:
 
 
 def _sync_image_assets(location_id: str, img_path: Path | None, txn: FileTransaction) -> list[bytes]:
-    existing_raw = sorted(RAW_IMAGE_DIR.glob(f"{location_id}_*"))
-    for old_file in existing_raw:
-        txn.delete(old_file)
-
     existing_resized = sorted(SEED_IMAGE_DIR.glob(f"{location_id}_*.jpg"))
     for old_file in existing_resized:
         txn.delete(old_file)
@@ -173,13 +158,10 @@ def _sync_image_assets(location_id: str, img_path: Path | None, txn: FileTransac
     if img_path is None:
         return []
 
-    raw_target = RAW_IMAGE_DIR / f"{location_id}_1{img_path.suffix.lower()}"
-    txn.write_bytes(raw_target, img_path.read_bytes())
-
     resized_target = SEED_IMAGE_DIR / f"{location_id}_1.jpg"
     txn.backup(resized_target)
     resized_target.parent.mkdir(parents=True, exist_ok=True)
-    ok = resize_and_crop(str(raw_target), str(resized_target))
+    ok = resize_and_crop(str(img_path), str(resized_target))
     if not ok or not resized_target.exists():
         raise RuntimeError(f"Failed to create resized image for {location_id}")
 
@@ -260,10 +242,9 @@ def run_import() -> None:
                 raise RuntimeError(result.get("message") or "Unknown database error")
 
             print("  Saved to N3 database")
-            print("  Updated seed_data.py")
+            print("  Updated locations.json")
             print("  Updated locations_with_vectors.json")
             if img_path is not None:
-                print(f"  Synced original image into seeds/raw_imgs/{raw_data['location_id']}_1{img_path.suffix.lower()}")
                 print(f"  Synced resized image into seeds/images/{raw_data['location_id']}_1.jpg")
                 print("  Database save used resized image bytes from seeds/images")
 
