@@ -15,8 +15,9 @@ N6 ranks candidate activities by combining semantic similarity with rule-based a
 ```
 backend/modules/n6_activity_ranking/
 ├── __init__.py          # Re-exports rank_activities
-├── rank_activities.py   # Scoring, blending, normalization logic
+├── pipeline.py   # Scoring, blending, normalization logic
 ├── preferences.py       # Rule-based user preference inference (3 axes)
+├── schemas.py
 └── requirements.txt
 ```
 

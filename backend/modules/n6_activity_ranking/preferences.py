@@ -1,68 +1,90 @@
 """
 preferences.py — Rule-based inference of user activity preferences.
 
-Receives user_input from N6 (tags + text + img_desc) and returns 3 preference scores
-in [0, 1] corresponding to the 3 attribute axes of activity metadata:
+Receives user_input from N6 (tags + text + img_desc) and returns preference scores
+on 3 physical axes in [0, 1]:
     - intensity: preference for excitement / adventure
-    - physical:  preference for physical activity
+    - physical:  preference for physical activity level
     - social:    preference for social / crowd interaction
 
-Approach: lookup table from tags (highest weight) + keyword scan over text+img_desc
-(small bonus). Deterministic — the same input always produces the same output, easy
-to trace in reports without needing to mock an LLM.
+Approach: lookup table from tags (highest weight) + keyword scan over text+img_desc (bonus).
+Deterministic — the same input always produces the same output.
 
-Returns None for any axis that has no signal at all → scoring skips that axis
-so activities are not unfairly penalised (neutral).
+Returns None for any axis with no signal → scoring skips that axis (neutral treatment).
+
+All tag keys in _TAG_WEIGHTS MUST exist in backend.shared.maps.activity_tags.ALL_TAGS.
 """
 
+from __future__ import annotations
+import math
 from typing import Dict, List, Optional
 
-from backend.shared.maps.tags import ALL_TAGS
+from backend.shared.maps.activity_tags import ALL_TAGS
 
-_ALL_TAGS_KEYS = set(ALL_TAGS.keys())
 
-# Score added per axis when a tag is present. Positive = pulls preference up,
-# negative = pulls it down (meaning the user does NOT want that axis).
-#
-# Values: ±1 = strong, ±0.5 = medium, ±0.3 = mild. After aggregation
-# through sigmoid, a few aligned tags push the score toward 0.8–0.95,
-# while opposing tags pull it toward 0.05–0.2.
+_ALL_TAG_KEYS = set(ALL_TAGS.keys())
+
+# =============================================================================
+# TAG → PREFERENCE AXIS WEIGHTS
+# All keys must be present in ALL_TAGS (asserted below).
+# Values: ±1.0 = strong signal, ±0.5 = moderate, ±0.3 = mild.
+# Positive = user wants this axis high; negative = user wants it low.
+# =============================================================================
+
 _TAG_WEIGHTS: Dict[str, Dict[str, float]] = {
-    # ── Adventure / excitement ────────────────────────────────────────────
-    "adventure":           {"intensity":  1.0, "physical":  0.8},
-    "trekking":            {"intensity":  0.8, "physical":  1.0},
-    "motorbiking":         {"intensity":  0.8, "physical":  0.5},
-    "cycling":             {"intensity":  0.3, "physical":  0.8},
-    "surfing":             {"intensity":  0.8, "physical":  0.8},
-    "scuba diving":        {"intensity":  0.5, "physical":  0.5},
-    "kayaking":            {"intensity":  0.5, "physical":  0.7},
-    "camping":             {"intensity":  0.5, "physical":  0.5},
-    "off the beaten path": {"intensity":  0.5, "social":   -0.3},
+    # ── High intensity / physical ────────────────────────────────────────────
+    "adventure":       {"intensity":  1.0, "physical":  0.8},
+    "trekking":        {"intensity":  0.8, "physical":  1.0},
+    "motorbiking":     {"intensity":  0.8, "physical":  0.5},
+    "cycling":         {"intensity":  0.3, "physical":  0.8},
+    "surfing":         {"intensity":  0.8, "physical":  0.8},
+    "scuba diving":    {"intensity":  0.5, "physical":  0.5},
+    "kayaking":        {"intensity":  0.5, "physical":  0.7},
+    "camping":         {"intensity":  0.4, "physical":  0.5},
+    "canyoning":       {"intensity":  0.9, "physical":  0.9},
+    "rock climbing":   {"intensity":  0.9, "physical":  1.0},
+    "caving":          {"intensity":  0.6, "physical":  0.6},
+    "rafting":         {"intensity":  0.8, "physical":  0.7},
+    "kitesurfing":     {"intensity":  0.9, "physical":  0.8},
+    "trail running":   {"intensity":  0.7, "physical":  1.0},
 
-    # ── Relaxation / gentle ────────────────────────────────────────────
-    "peaceful":  {"intensity": -0.8, "physical": -0.5, "social": -0.3},
-    "cozy":      {"intensity": -0.5, "physical": -0.3, "social": -0.2},
-    "spa":       {"intensity": -0.8, "physical": -0.8},
-    "boat cruise": {"intensity": -0.3, "physical": -0.5},
-    "homestay":  {"intensity": -0.3, "social":    0.3},
+    # ── Relaxation / low intensity ───────────────────────────────────────────
+    "peaceful":        {"intensity": -0.8, "physical": -0.5, "social": -0.3},
+    "cozy":            {"intensity": -0.5, "physical": -0.3, "social": -0.2},
+    "spa":             {"intensity": -0.8, "physical": -0.8},
+    "boat cruise":     {"intensity": -0.3, "physical": -0.5},
+    "slow travel":     {"intensity": -0.5, "physical": -0.4},
+    "meditation":      {"intensity": -0.8, "physical": -0.5, "social": -0.5},
+    "yoga retreat":    {"intensity": -0.5, "physical":  0.2, "social": -0.3},
+    "wellness retreat":{"intensity": -0.6, "physical": -0.3},
+    "chill":           {"intensity": -0.6, "physical": -0.4},
+    "picnic":          {"intensity": -0.4, "physical": -0.2, "social":  0.2},
 
-    # ── Social axis: group / crowds ─────────────────────────────────
-    "family":       {"social":  0.8, "intensity": -0.3},
-    "group":        {"social":  1.0},
-    "friends trip": {"social":  0.8},
-    "vibrant":      {"social":  0.8, "intensity":  0.3},
-    "couple":       {"social": -0.2},
-    "solo":         {"social": -1.0},
-    "romantic":     {"social": -0.3, "intensity": -0.3},
+    # ── Social axis ───────────────────────────────────────────────────────────
+    "family":          {"social":  0.8, "intensity": -0.3},
+    "group":           {"social":  1.0},
+    "friends trip":    {"social":  0.8},
+    "vibrant":         {"social":  0.8, "intensity":  0.3},
+    "couple":          {"social": -0.2},
+    "solo":            {"social": -1.0},
+    "romantic":        {"social": -0.3, "intensity": -0.3},
+    "homestay":        {"social":  0.3, "intensity": -0.2},
+    "off the beaten path": {"intensity":  0.3, "social": -0.3},
 
-    # ── Sightseeing / photography (neutral on primary axis) ────────────────
-    "photography":   {"physical":  0.2},
-    "cooking class": {"social":    0.3, "physical": -0.2},
+    # ── Soft activities ───────────────────────────────────────────────────────
+    "photography":     {"physical":  0.2},
+    "cooking class":   {"social":    0.3, "physical": -0.2},
+    "nightlife":       {"social":    0.8, "intensity":  0.4},
 }
 
-assert set(_TAG_WEIGHTS.keys()).issubset(_ALL_TAGS_KEYS), f"Fabricated tags in _TAG_WEIGHTS: {set(_TAG_WEIGHTS.keys()) - _ALL_TAGS_KEYS}"
+assert set(_TAG_WEIGHTS.keys()).issubset(_ALL_TAG_KEYS), (
+    f"Tags in _TAG_WEIGHTS not in ALL_TAGS: {set(_TAG_WEIGHTS.keys()) - _ALL_TAG_KEYS}"
+)
 
-# Keywords in user free-text, used only as a bonus (lower weight than tags).
+# =============================================================================
+# KEYWORD WEIGHTS  (text + img_desc, weighted at 0.5× tag weight)
+# =============================================================================
+
 _KEYWORD_WEIGHTS: Dict[str, Dict[str, float]] = {
     # Vietnamese
     "mạo hiểm":  {"intensity":  0.5},
@@ -80,8 +102,10 @@ _KEYWORD_WEIGHTS: Dict[str, Dict[str, float]] = {
     "gia đình":  {"social":     0.5, "intensity": -0.2},
     "một mình":  {"social":    -0.8},
     "lãng mạn":  {"social":    -0.3, "intensity": -0.2},
+    "cắm trại":  {"intensity":  0.3, "physical":  0.4},
+    "leo vách":  {"intensity":  0.8, "physical":  1.0},
 
-    # English (img_desc from N2 is usually in English)
+    # English (img_desc from N2 is usually English)
     "adventure":  {"intensity":  0.5},
     "exciting":   {"intensity":  0.4},
     "hiking":     {"intensity":  0.4, "physical":  0.5},
@@ -94,56 +118,56 @@ _KEYWORD_WEIGHTS: Dict[str, Dict[str, float]] = {
     "crowd":      {"social":     0.4},
     "bustling":   {"social":     0.5},
     "solo":       {"social":    -0.5},
+    "extreme":    {"intensity":  0.8, "physical":  0.7},
+    "strenuous":  {"physical":   0.8, "intensity":  0.5},
 }
 
 _AXES = ("intensity", "physical", "social")
 
-# Neutral 0.5; each axis score lands in [0,1] after sigmoid. If total signal < NEUTRAL_THRESHOLD
-# the user is considered to have expressed no preference for that axis → return None.
+# Axes with total absolute signal below this threshold → return None (no preference)
 NEUTRAL_THRESHOLD = 0.10
 
 
 def _sigmoid(x: float) -> float:
     """Map raw signal ℝ → [0, 1]. x=0 → 0.5, x=±2 → ~0.88/0.12."""
-    import math
     return 1.0 / (1.0 + math.exp(-x))
 
 
 def infer_user_preferences(user_input: Dict) -> Dict[str, Optional[float]]:
     """
-    Analyse user_input → preference on the 3 axes: intensity / physical / social.
+    Analyse user_input → preference scores on 3 axes: intensity / physical / social.
 
     Args:
         user_input: {"text": str?, "img_desc": str?, "tags": [str]?}
 
     Returns:
         {"intensity": float|None, "physical": float|None, "social": float|None}
-        - float in [0,1]: 1.0 = strongly prefers this axis, 0.0 = strongly opposed.
-        - None: user did not express a clear preference → scoring will skip this axis.
+        - float in [0,1]: 1.0 = strongly prefers high value, 0.0 = strongly opposed.
+        - None: no clear signal → scoring will skip this axis (neutral, not penalised).
     """
     raw = {axis: 0.0 for axis in _AXES}
     signal_count = {axis: 0 for axis in _AXES}
 
-    # 1. Tags (highest weight)
+    # 1. Tags (highest weight — direct lookup)
     tags = [t.lower().strip() for t in (user_input.get("tags") or [])]
     for tag in tags:
-        weights = _TAG_WEIGHTS.get(tag)
-        if not weights:
+        axis_weights = _TAG_WEIGHTS.get(tag)
+        if not axis_weights:
             continue
-        for axis, w in weights.items():
-            raw[axis] += w
+        for axis, w in axis_weights.items():
+            raw[axis]          += w
             signal_count[axis] += 1
 
-    # 2. Keywords in text + img_desc (bonus, weight = 0.5 × tag weight)
+    # 2. Keywords in text + img_desc (0.5× tag weight)
     haystack = " ".join(filter(None, [
-        (user_input.get("text") or "").lower(),
+        (user_input.get("text")     or "").lower(),
         (user_input.get("img_desc") or "").lower(),
     ]))
     if haystack:
-        for kw, weights in _KEYWORD_WEIGHTS.items():
+        for kw, axis_weights in _KEYWORD_WEIGHTS.items():
             if kw in haystack:
-                for axis, w in weights.items():
-                    raw[axis] += 0.5 * w
+                for axis, w in axis_weights.items():
+                    raw[axis]          += 0.5 * w
                     signal_count[axis] += 1
 
     # 3. Sigmoid + threshold: axes with little/no signal → None
