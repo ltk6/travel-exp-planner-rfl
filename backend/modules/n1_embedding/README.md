@@ -101,7 +101,7 @@ Before encoding, `preprocessor.preprocess()` constructs four channel strings:
 
 ## Batch Strategy
 
-`embed_batch()` is the preferred high-throughput path and is used by N8 for both user-query embedding and activity batch-embedding:
+`embed_batch()` is the preferred high-throughput path and is used by N18 for both user-query embedding and activity batch-embedding:
 
 1. Validate and preprocess every item
 2. Flatten all four channels across the entire batch into one string list

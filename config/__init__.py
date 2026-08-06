@@ -3,7 +3,9 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+import contextvars
 
+request_id_var = contextvars.ContextVar("request_id", default=None)
 # ====================== PROJECT SETUP ======================
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -26,8 +28,8 @@ LOG_DATEFMT = "%H:%M:%S"
 LOG_LEVEL = logging.INFO
 
 class DynamicFormatter(logging.Formatter):
-    DETAILED_FORMAT = "%(asctime)s [%(levelname)s] %(name)s [%(filename)s:%(lineno)d]: %(message)s"
-    SIMPLE_FORMAT = "[%(levelname)s] %(name)s: %(message)s"
+    DETAILED_FORMAT = "%(asctime)s [%(levelname)s] %(name)s [%(filename)s:%(lineno)d] %(req_id)s%(message)s"
+    SIMPLE_FORMAT = "[%(levelname)s] %(name)s: %(req_id)s%(message)s"
 
     def __init__(self, datefmt=None):
         super().__init__(datefmt=datefmt)
@@ -35,6 +37,8 @@ class DynamicFormatter(logging.Formatter):
         self.simple_formatter = logging.Formatter(self.SIMPLE_FORMAT, datefmt=datefmt)
 
     def format(self, record):
+        req_id = request_id_var.get()
+        record.req_id = f"[{req_id}] " if req_id else ""
         if record.name.startswith("N18"):
             return self.detailed_formatter.format(record)
         return self.simple_formatter.format(record)

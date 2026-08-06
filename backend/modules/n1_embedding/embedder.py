@@ -61,11 +61,6 @@ def get_light_model():
             raise RuntimeError(f"Failed to load light embedding model: {e}")
     return _LIGHT_MODEL
 
-# Pre-load at module level to avoid lazy-loading delays during user requests
-get_model()
-get_light_model()
-
-
 def embed_strings(strings: List[str]) -> List[Optional[List[float]]]:
     """
     Converts strings into normalized vectors.

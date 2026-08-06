@@ -75,7 +75,7 @@ class N17FeedbackOutput(BaseModel):
 | `explanation` | Human-readable summary of what changed — shown in N16 UI |
 | `metadata` | Provider name, model, and token usage |
 
-N8 passes `refined_text`, `refined_tags`, and `refined_img_desc` back into `recommend_service()` or `activities_service()` for a second run, then attaches the full refined payload to the response for display.
+N18 passes `refined_text`, `refined_tags`, and `refined_img_desc` back into `recommend_service()` or `activities_service()` for a second run, then attaches the full refined payload to the response for display.
 
 ---
 
@@ -102,7 +102,7 @@ If the LLM call fails, times out, or returns unparseable JSON, N17 returns:
 | `refined_img_desc` | Preserves current `img_desc` unchanged |
 | `explanation` | `"Fallback: feedback appended to original query"` |
 
-This ensures N8 always gets a usable payload to re-run the main workflow.
+This ensures N18 always gets a usable payload to re-run the main workflow.
 
 ---
 

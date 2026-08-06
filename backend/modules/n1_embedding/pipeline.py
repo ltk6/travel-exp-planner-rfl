@@ -40,7 +40,6 @@ def light_embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]], task
     t0 = time.time()
 
     # 1. Preprocess all inputs
-    logger.info(f"Preprocessing {len(validated_list)} inputs for light embed...")
     all_preprocessed = []
     for data in validated_list:
         p = preprocess(
@@ -62,14 +61,9 @@ def light_embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]], task
                 flat_strings.append(val)
 
     # 3. Batch encode
-    logger.info(
-        f"Light batch encoding {len(flat_strings)} strings "
-        f"({len(validated_list)} items * {len(channels)} channels)..."
-    )
     flat_vectors = light_embed_strings(flat_strings)
 
     # 4. Unflatten back into per-item outputs
-    logger.info("Unflattening vectors back to items...")
     results = []
     num_channels = len(channels)
     for i, p in enumerate(all_preprocessed):
@@ -96,7 +90,11 @@ def light_embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]], task
         )
 
     elapsed_ms = int((time.time() - t0) * 1000)
-    logger.info(f"N1 light embedding completed in {elapsed_ms}ms for {len(validated_list)} items.")
+    valid_dim = len(next((v for v in flat_vectors if v is not None), []))
+    logger.info(
+        "module=N1 op=light_embed_batch duration_ms=%d status=ok count=%d dims=%d",
+        elapsed_ms, len(validated_list), valid_dim
+    )
 
     # 5. Add metadata to each result
     model_instance = get_light_model()
@@ -143,7 +141,6 @@ def embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]]) -> list[di
     t0 = time.time()
 
     # 1. Preprocess all inputs
-    logger.info(f"Preprocessing {len(validated_list)} inputs...")
     all_preprocessed = []
     for data in validated_list:
         p = preprocess(
@@ -161,14 +158,9 @@ def embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]]) -> list[di
             flat_strings.append(p[ch])
 
     # 3. Batch encode (SentenceTransformer natively handles batching optimally)
-    logger.info(
-        f"Batch encoding {len(flat_strings)} strings "
-        f"({len(validated_list)} items * {len(channels)} channels)..."
-    )
     flat_vectors = embed_strings(flat_strings)
 
     # 4. Unflatten back into per-item outputs
-    logger.info("Unflattening vectors back to items...")
     results = []
     num_channels = len(channels)
     for i, p in enumerate(all_preprocessed):
@@ -195,7 +187,11 @@ def embed_batch(data_list: list[Union[N1EmbedInput, dict[str, Any]]]) -> list[di
         )
 
     elapsed_ms = int((time.time() - t0) * 1000)
-    logger.info(f"N1 embedding completed in {elapsed_ms}ms for {len(validated_list)} items.")
+    valid_dim = len(next((v for v in flat_vectors if v is not None), []))
+    logger.info(
+        "module=N1 op=embed_batch duration_ms=%d status=ok count=%d dims=%d",
+        elapsed_ms, len(validated_list), valid_dim
+    )
 
     model_instance = get_model()
     device = str(model_instance.device) if hasattr(model_instance, "device") else "unknown"

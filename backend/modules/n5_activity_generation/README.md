@@ -1,13 +1,12 @@
 # N5 Activity Generation Module
 
-N5 generates candidate activities for each location in a result set. It uses an LLM-first strategy with a configurable provider chain, falls back to template expansion when LLM output is missing or insufficient, and returns a flat list of activity records plus per-location generation diagnostics.
+N5 generates candidate activities for each location in a result set. It uses a pure LLM strategy with a configurable provider chain (primarily Groq), and returns a flat list of activity records plus per-location generation diagnostics.
 
 ## Responsibilities
 
-- Accept user preferences, candidate locations, and optional timing constraints
+- Accept user preferences and candidate locations
 - Normalize and validate incoming user and location payloads
 - Generate activities for each location via the configured LLM provider chain
-- Fall back to template-based generation when LLM output is absent or below threshold
 - Deduplicate activities by name within each location
 - Return structured activity metadata and per-location generation diagnostics
 
@@ -16,7 +15,7 @@ N5 generates candidate activities for each location in a result set. It uses an 
 ```
 backend/modules/n5_activity_generation/
 ├── __init__.py                  # Re-exports generate_activities
-├── pipeline.py     # Orchestration: normalize → LLM → template → dedup
+├── pipeline.py              # Orchestration: normalize → LLM → dedup
 ├── llm_provider.py          # LLM prompt construction and response parsing
 ├── config.py
 ├── schemas.py
@@ -45,32 +44,23 @@ class N5UserInput(BaseModel):
     img_desc: Optional[str] = ""
 
 class N5LocationMetadata(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: Optional[str] = ""
+    description: Optional[str] = ""
     tags: List[str] = []
-    coordinates: Optional[Dict[str, Optional[float]]] = None
-    address: Optional[str] = None
 
 class N5LocationItem(BaseModel):
     location_id: str
     metadata: Optional[N5LocationMetadata] = None
 
-class N5Constraints(BaseModel):
-    time_of_day: Optional[str] = "anytime"
-
 class N5GenerateInput(BaseModel):
-    user: N5UserInput
-    locations: List[N5LocationItem] = []
-    constraints: Optional[N5Constraints] = None
-    provider_override: Optional[str] = None
+    user: N5UserInput = Field(default_factory=N5UserInput)
+    locations: List[N5LocationItem] = Field(default_factory=list)
 ```
 
 | Field | Description |
 |---|---|
 | `user` | User preferences: free text, tags, and image description |
 | `locations` | Locations to generate activities for |
-| `constraints` | Optional timing constraint (`time_of_day`) |
-| `provider_override` | Force a specific LLM provider (skips chain order) |
 
 ---
 
@@ -112,7 +102,7 @@ N5 has no formal Pydantic output model. Malformed LLM items are dropped internal
 
 - `activities` is a flat list across all input locations
 - Malformed or incomplete items are silently dropped by N5's internal JSON parser
-- When used in the N8 `activities_v2_service`, N5 output is validated against `N3ActivityItem` before merging with DB-backed activities
+- When used in the N18 orchestrator, N5 output is validated against `N3ActivityItem` before merging with DB-backed activities
 
 ---
 
@@ -122,11 +112,10 @@ For each location:
 
 1. Normalize the user input and location metadata
 2. Build a travel-context prompt (location name, tags, user preferences)
-3. Try the LLM provider chain in order (Groq → Gemini by default)
+3. Try the LLM provider chain in order (Groq exclusively with a fallback chain)
 4. Accept LLM output if enough valid activities are returned
-5. Fill gaps or fully fall back with template expansion when needed
-6. Deduplicate activities by name within the location
-7. Accumulate into the flat output list
+5. Deduplicate activities by name within the location
+6. Accumulate into the flat output list
 
 ---
 
@@ -134,17 +123,14 @@ For each location:
 
 N5 uses a prioritized provider chain managed by `providers/registry.py`:
 
-- **Groq** (primary): fast, free-tier, rate-limited — tried first
-- **Gemini** (fallback): used when Groq fails or is rate-limited
+- **Groq**: fast, free-tier, rate-limited
 
-Each provider implements retry logic and RPM-limit awareness via `providers/base.py`. The chain is exposed as `get_llm_chain()` and is also used by `processor.py` (activity retrievals) for description enrichment.
+Groq provider implements retry logic and RPM-limit awareness via `providers/base.py`. The chain is exposed as `get_llm_chain()` and is also used by `processor.py` (activity retrievals) for description enrichment.
 
 ---
 
 ## Runtime Notes
 
 - The module short-circuits to an empty result when generation count is configured to `0`
-- Template generation can add diversity modifiers when extra coverage is needed
-- Sightseeing-oriented activities may be boosted to maintain variety in the returned set
-- Activity types are drawn from the 7-value enum: `adventure`, `relaxation`, `food`, `culture`, `nightlife`, `nature`, `shopping`
+- Activity types are drawn from the 9-value enum: `adventure`, `relaxation`, `food`, `culture`, `nightlife`, `nature`, `shopping`, `photography`, `experience`
 - Logging covers generation progress and per-location timing via the project logging helper

@@ -38,7 +38,7 @@ def generate_activities(data: Union[N5GenerateInput, dict]) -> dict:
     
     # ─── Step 0: Early Exit Check ────────────────────────────────────────────
     if TARGET_ACT_COUNT <= 0:
-        logger.info("N5: Skipping generation (config set to 0)")
+        logger.info("module=N5 op=generate status=ok msg=\"Skipping generation (config set to 0)\"")
         return {
             "activities": [], 
             "metadata": {
@@ -73,12 +73,10 @@ def generate_activities(data: Union[N5GenerateInput, dict]) -> dict:
             
             deduped = _deduplicate(mapped_activities)
             all_activities.extend(deduped)
-            logger.info(
-                "Location '%s' (%s): generated %d activities",
-                loc_name, loc_id, len(deduped)
-            )
 
     elapsed_ms = int((time.time() - t0) * 1000)
+    total_tokens = sum(m.get("usage", {}).get("total_tokens", 0) for m in llm_metas if m.get("usage"))
+    logger.info("module=N5 op=generate duration_ms=%d status=ok in_count=%d out_count=%d tokens=%d", elapsed_ms, len(locations), len(all_activities), total_tokens)
     return {
         "activities": all_activities, 
         "metadata": {
@@ -179,7 +177,7 @@ QUY TẮC ĐẦU RA (NGHIÊM NGẶT):
 
 TRẢ LỜI (chỉ JSON Object, không kèm gì khác):"""
 
-    logger.info("Calling LLM for location='%s' (requesting %d activities)", location_name, TARGET_ACT_COUNT)
+    # Calling LLM
     response_text, provider_used, model_used, usage = _call_llm_chain(prompt)
     
     meta.update({
@@ -190,12 +188,12 @@ TRẢ LỜI (chỉ JSON Object, không kèm gì khác):"""
     })
 
     if not response_text:
-        logger.warning("LLM returned no response for '%s'", location_name)
+        logger.warning("module=N5 op=generate_for_location status=error error_type=no_llm_response location=%s", location_name)
         return [], meta
 
     raw_list = _parse_llm_response(response_text)
     if not raw_list:
-        logger.warning("Failed to parse LLM response for '%s'", location_name)
+        logger.warning("module=N5 op=generate_for_location status=error error_type=parse_failed location=%s", location_name)
         return [], meta
 
     valid_activities = []
@@ -207,7 +205,6 @@ TRẢ LỜI (chỉ JSON Object, không kèm gì khác):"""
             act["tags"] = filtered if filtered else cleaned # Fallback to raw tags if nothing matched
             valid_activities.append(act)
 
-    logger.info("LLM generated %d/%d valid activities for '%s'", len(valid_activities), TARGET_ACT_COUNT, location_name)
     return valid_activities, meta
 
 

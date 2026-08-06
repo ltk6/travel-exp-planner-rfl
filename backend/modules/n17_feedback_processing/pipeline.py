@@ -188,14 +188,17 @@ def process_feedback(
         f_text = feedback_text
         chain = llm_chain
 
-    logger.info("N17 — Start processing feedback. Feedback length: %d chars", len(f_text))
+    t0 = time.time()
     prompt = _build_feedback_prompt(u_input, u_tags, u_img_desc, f_text)
     res_text, provider, model, usage = call_llm(prompt, chain_override=chain)
+    
+    latency_ms = int((time.time() - t0) * 1000)
     
     metadata = {
         "model": model,
         "provider": provider,
-        "usage": usage
+        "usage": usage,
+        "latency_ms": latency_ms
     }
 
     if res_text:
@@ -207,11 +210,11 @@ def process_feedback(
             if "refined_img_desc" not in parsed:
                 parsed["refined_img_desc"] = u_img_desc
             
-            logger.info("N17 — Feedback processed successfully. Refined text: '%s'", parsed.get("refined_text"))
+            logger.info("module=N17 op=process_feedback duration_ms=%d status=ok in_chars=%d out_chars=%d tokens=%d", latency_ms, len(f_text), len(parsed.get("refined_text", "")), usage.get("total_tokens", 0) if usage else 0)
             parsed["metadata"] = metadata
             return parsed
 
-    logger.warning("N17 — Failed to parse LLM feedback response. Using fallback.")
+    logger.warning("module=N17 op=process_feedback duration_ms=%d status=error error_type=fallback_used in_chars=%d out_chars=%d tokens=%d", latency_ms, len(f_text), len(u_input) + len(f_text) + 2, usage.get("total_tokens", 0) if usage else 0)
     return {
         "refined_text": f"{u_input}. {f_text}",
         "refined_tags": u_tags,

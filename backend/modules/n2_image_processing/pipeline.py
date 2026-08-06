@@ -23,14 +23,15 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
     validated = N2ImageInput.model_validate(data) if isinstance(data, dict) else data
     image_bytes = validated.image
     if not image_bytes:
-        logger.warning("No image provided to N2")
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.warning("module=N2 op=process_image duration_ms=%d status=error error_type=no_image", latency_ms)
         latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
         return N2ImageOutput(
             img_desc="",
             metadata={"error": "No image provided", "latency_ms": latency_ms}
         ).model_dump()
 
-    logger.info(f"Processing image ({len(image_bytes)} bytes) via Groq Vision...")
+    # Image optimization
 
     try:
         img = Image.open(io.BytesIO(image_bytes))
@@ -44,7 +45,7 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
         img.save(buffer, format='JPEG', quality=85, optimize=True)
         img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
         
-        logger.info(f"Image optimized: {len(buffer.getvalue())} bytes (original: {len(image_bytes)})")
+        # Image optimized
 
         prompt = """
         Bạn là chuyên gia mô tả địa điểm du lịch.
@@ -96,11 +97,12 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
         usage = result.get("usage", {})
         prompt_tokens = usage.get("prompt_tokens", 0)
         completion_tokens = usage.get("completion_tokens", 0)
-        logger.info(f"N2 usage: {prompt_tokens} prompt tokens, {completion_tokens} completion tokens.")
+        # usage captured
 
         choices = result.get("choices", [])
         if not choices:
-            latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            logger.warning("module=N2 op=process_image duration_ms=%d status=error error_type=empty_response", latency_ms)
             return N2ImageOutput(
                 img_desc="", 
                 metadata={"error": "Empty response from model", "latency_ms": latency_ms}
@@ -108,13 +110,15 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
 
         text = choices[0].get("message", {}).get("content", "")
         if not text:
-            latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            logger.warning("module=N2 op=process_image duration_ms=%d status=error error_type=no_text", latency_ms)
             return N2ImageOutput(
                 img_desc="", 
                 metadata={"error": "No text returned (possible safety block or invalid image)", "latency_ms": latency_ms}
             ).model_dump()
 
-        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.info("module=N2 op=process_image duration_ms=%d status=ok in_bytes=%d out_chars=%d tokens=%d", latency_ms, len(image_bytes), len(text), prompt_tokens + completion_tokens)
         metadata = {
             "model": GROQ_VISION_MODEL,
             "latency_ms": latency_ms,
@@ -132,8 +136,8 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
 
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8")
-        logger.error(f"HTTPError in N2 image processing: {e.code} - {error_body}")
-        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.error("module=N2 op=process_image duration_ms=%d status=error error_type=http_error code=%s", latency_ms, e.code)
         return N2ImageOutput(
             img_desc="", 
             metadata={
@@ -143,8 +147,8 @@ def process_image(data: Union[N2ImageInput, dict]) -> dict:
             }
         ).model_dump()
     except Exception as e:
-        logger.exception(f"Exception in N2 image processing: {e}")
-        latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.error("module=N2 op=process_image duration_ms=%d status=error error_type=exception msg=\"%s\"", latency_ms, str(e)[:50])
         return N2ImageOutput(
             img_desc="",
             metadata={

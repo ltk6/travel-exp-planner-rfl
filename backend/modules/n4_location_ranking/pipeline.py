@@ -137,8 +137,6 @@ def rank_locations(data: Union[N4RankInput, dict[str, Any]]) -> dict[str, Any]:
 
     # ── resolve weights from text_k & tags_k ──────────────────
     weights = get_weights(text_k, tags_k)
-    logger.info(f"Ranking {len(locations)} locations (signals: text_k={text_k}, tags_k={tags_k})")
-    logger.info(f"Resolved weights: {weights}")
 
     scored: list[dict] = []
     for loc in locations:
@@ -152,7 +150,7 @@ def rank_locations(data: Union[N4RankInput, dict[str, Any]]) -> dict[str, Any]:
             raise
         except (TypeError, ValueError, ZeroDivisionError) as exc:
             # Runtime data issue (vector length mismatch, NaN, …) — log + score 0.
-            logger.warning("[N4] Scoring error for %s: %s: %s", loc_id, type(exc).__name__, exc)
+            logger.warning("module=N4 op=score_location loc_id=%s status=error error_type=%s", loc_id, type(exc).__name__)
             score, reason = 0.0, "Scoring error"
 
         scored.append({
@@ -173,7 +171,7 @@ def rank_locations(data: Union[N4RankInput, dict[str, Any]]) -> dict[str, Any]:
             r["score"] = round(0.65 + shaped * 0.30, 4)
 
     elapsed_ms = int((time.time() - t0) * 1000)
-    logger.info("[N4] Ranked %d locations → top %d (normalized) in %dms", len(locations), len(result), elapsed_ms)
+    logger.info("module=N4 op=rank_locations duration_ms=%d status=ok in_count=%d out_count=%d", elapsed_ms, len(locations), len(result))
     
     return {
         "locations": result,

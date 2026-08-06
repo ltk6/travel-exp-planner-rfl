@@ -46,7 +46,7 @@ _LAST_USAGE: Dict[str, dict] = {}
 
 DEFAULT_SYSTEM = (
     "You are a travel expert. Always respond with pure JSON only — "
-    "no markdown, no code blocks, no explanation. Start your response directly with ["
+    "no markdown, no code blocks, no explanation."
 )
 
 
@@ -79,7 +79,6 @@ def _call_groq(
         ],
         "temperature": LLM_TEMP,
         "max_tokens": max_tokens,
-        "response_format": {"type": "json_object"},
     }
     data = json.dumps(payload).encode("utf-8")
 
@@ -114,8 +113,7 @@ def _call_groq(
     if usage:
         p_tokens = usage.get("prompt_tokens", 0)
         c_tokens = usage.get("completion_tokens", 0)
-        _LAST_USAGE[provider["name"]] = {"prompt_tokens": p_tokens, "completion_tokens": c_tokens}
-        logger.info("Groq usage: %d prompt, %d completion tokens", p_tokens, c_tokens)
+        _LAST_USAGE[provider["name"]] = {"prompt_tokens": p_tokens, "completion_tokens": c_tokens, "total_tokens": p_tokens + c_tokens}
 
     if choices:
         return choices[0].get("message", {}).get("content", "")
@@ -188,34 +186,15 @@ def generate(
             system=system,
             max_tokens=max_tokens,
         )
-        latency_ms = int((time.time() - t0) * 1000)
         if result:
-            logger.info(
-                "LLM call provider=%s model=%s status=ok latency_ms=%d",
-                name, model, latency_ms,
-            )
             return result
         # call_fn returns None = non-retryable error (auth, parse, safety)
-        logger.warning(
-            "LLM call provider=%s model=%s status=fail_nonretryable latency_ms=%d",
-            name, model, latency_ms,
-        )
         return None
 
     except RetryableError as e:
-        latency_ms = int((time.time() - t0) * 1000)
-        logger.warning(
-            "LLM call provider=%s model=%s status=retryable_%s latency_ms=%d",
-            name, model, e.status, latency_ms,
-        )
         raise e
 
     except Exception as e:
-        latency_ms = int((time.time() - t0) * 1000)
-        logger.error(
-            "LLM call provider=%s model=%s status=error latency_ms=%d err=%s",
-            name, model, latency_ms, e,
-        )
         return None
 
 

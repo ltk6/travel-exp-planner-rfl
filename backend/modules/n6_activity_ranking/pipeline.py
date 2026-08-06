@@ -47,7 +47,7 @@ _COMPLETENESS_WEIGHTS = {
 
 def _cosine(a: list[float] | None, b: list[float] | None) -> float:
     if a and b and len(a) != len(b):
-        logger.warning("[N6] Vector length mismatch: %d vs %d", len(a), len(b))
+        logger.warning("module=N6 op=cosine status=error error_type=vector_length_mismatch len_a=%d len_b=%d", len(a), len(b))
     return _cosine_fn(a, b)
 
 
@@ -232,10 +232,8 @@ def rank_activities(data: Union[N6RankInput, Dict[str, Any]]) -> Dict[str, Any]:
     tags_k       = validated.tags_k
 
     if not activities or top_k <= 0:
-        logger.info("N6 skipping ranking (0 activities or top_k <= 0)")
+        logger.info("module=N6 op=rank_activities status=ok msg=\"skipping ranking (0 activities or top_k <= 0)\"")
         return {"activities": [], "metadata": {"latency_ms": 0}}
-
-    logger.info("Ranking %d activities (top_k=%d)", len(activities), top_k)
 
     # Derived once for all activities
     user_prefs = infer_user_preferences(user_input)
@@ -284,7 +282,7 @@ def rank_activities(data: Union[N6RankInput, Dict[str, Any]]) -> Dict[str, Any]:
         })
 
     elapsed_ms = int((time.time() - t0) * 1000)
-    logger.info("Ranking complete. Returning %d activities (latency=%dms)", len(final_results), elapsed_ms)
+    logger.info("module=N6 op=rank_activities duration_ms=%d status=ok in_count=%d out_count=%d", elapsed_ms, len(activities), len(final_results))
     return {
         "activities": final_results,
         "metadata": {
