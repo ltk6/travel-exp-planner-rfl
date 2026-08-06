@@ -24,10 +24,15 @@ export function useRecommendMutation() {
       setPayload(payload);
     },
     onSuccess: async (data, payload) => {
-      // Prefetch images for the top locations right after recommend succeeds to warm cache
-      prefetchLocationImages(data);
-
+      const store = usePlannerStore.getState();
+      store.setImagesLoaded(false);
       setResults(data);
+      
+      // Prefetch images for the top locations right after recommend succeeds to warm cache
+      // We don't await this so the UI renders locations immediately
+      prefetchLocationImages(data).finally(() => {
+        store.setImagesLoaded(true);
+      });
       clearActivities();
       qc.removeQueries({ queryKey: ["activities"] });
       setCurrentSessionId(null);

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const serverSchema = z.object({
-  BACKEND_URL: z.string().url().default("http://localhost:5000"),
+  BACKEND_URL: z.string().url().default("http://127.0.0.1:8000"),
   INTERNAL_API_KEY: z.string().default(""),
   BACKEND_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
 });
@@ -34,12 +34,15 @@ function loadRootEnv() {
 const rootEnv = loadRootEnv();
 
 // Derive backend URL from the global config if not explicitly provided
-const apiHost = rootEnv.API_HOST || "localhost";
-const apiPort = rootEnv.API_PORT || "5000";
-const derivedBackendUrl = `http://${apiHost === "0.0.0.0" ? "localhost" : apiHost}:${apiPort}`;
+const apiHost = rootEnv.API_HOST || "127.0.0.1";
+const apiPort = rootEnv.API_PORT || "8000";
+const derivedBackendUrl = `http://${apiHost === "0.0.0.0" ? "127.0.0.1" : apiHost}:${apiPort}`;
+
+const rawBackendUrl = process.env.BACKEND_URL || rootEnv.BACKEND_URL || derivedBackendUrl;
+const safeBackendUrl = rawBackendUrl.replace("localhost", "127.0.0.1");
 
 export const env = serverSchema.parse({
-  BACKEND_URL: process.env.BACKEND_URL || rootEnv.BACKEND_URL || derivedBackendUrl,
+  BACKEND_URL: safeBackendUrl,
   INTERNAL_API_KEY: process.env.INTERNAL_API_KEY || rootEnv.INTERNAL_API_KEY,
   BACKEND_TIMEOUT_MS: process.env.BACKEND_TIMEOUT_MS || rootEnv.BACKEND_TIMEOUT_MS,
 });

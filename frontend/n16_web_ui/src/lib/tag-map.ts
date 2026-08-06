@@ -96,7 +96,6 @@ const ALL_TAGS_VI: Record<string, string> = {
   "ethnic market": "Chợ phiên",
   "walking street": "Phố đi bộ",
   "rooftop bar": "Rooftop Bar",
-  coworking: "Coworking Space",
 
   // G. ACTIVITIES — LAND
   trekking: "Trekking",
@@ -111,7 +110,6 @@ const ALL_TAGS_VI: Record<string, string> = {
   "zip lining": "Trượt Zipline",
   camping: "Cắm trại",
   "jeep tour": "Tour xe Jeep",
-  ATV: "Đua xe ATV",
   "train journey": "Tàu hỏa ngắm cảnh",
   "night train": "Tàu giường nằm",
   cyclo: "Đi xích lô",
@@ -129,17 +127,15 @@ const ALL_TAGS_VI: Record<string, string> = {
   snorkeling: "Lặn ống thở",
   seawalk: "Đi bộ biển",
   kayaking: "Chèo Kayak",
-  "stand up paddle": "Chèo SUP",
+  "stand up paddle": "Chèo ván đứng",
   surfing: "Lướt sóng",
   kitesurfing: "Lướt ván diều",
   "boat cruise": "Du thuyền",
   "junk boat": "Tàu gỗ vịnh",
-  "basket boat": "Thuyền thúng",
   "speed boat": "Cano cao tốc",
   fishing: "Câu cá",
   "squid fishing": "Câu mực đêm",
   "river cruise": "Du thuyền sông",
-  "limestone boat ride": "Thuyền chèo hang",
   rafting: "Vượt thác phao",
   "mud bath": "Tắm bùn nóng",
   swimming: "Tắm biển",
@@ -148,13 +144,10 @@ const ALL_TAGS_VI: Record<string, string> = {
 
   // I. ACTIVITIES — LEISURE, WELLNESS & LEARNING
   spa: "Spa Massage",
-  "herbal bath": "Tắm lá thuốc",
   "yoga retreat": "Tĩnh tâm Yoga",
   "wellness retreat": "Wellness Retreat",
   "hot spring bath": "Tắm suối nóng",
   "cooking class": "Lớp nấu ăn",
-  "pottery class": "Lớp làm gốm",
-  "lantern making": "Lớp đèn lồng",
   "farm tour": "Trải nghiệm vườn",
   "tea tasting": "Thưởng trà",
   "coffee tour": "Tour cà phê",
@@ -163,7 +156,6 @@ const ALL_TAGS_VI: Record<string, string> = {
   "water park": "Công viên nước",
   picnic: "Cắm trại picnic",
   "night tour": "Tour du đêm",
-  "martial arts class": "Lớp võ",
   volunteering: "Tình nguyện",
 
   // J. FOOD & DRINK

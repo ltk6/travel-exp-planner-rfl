@@ -7,10 +7,9 @@ import type { ActivitiesPayload, LocationResult } from "@/lib/types";
 
 export function useActivitiesQuery(
   loc: LocationResult,
-  options?: { enabled?: boolean; preferredTypes?: string[] },
+  options?: { enabled?: boolean },
 ) {
   const enabled = options?.enabled ?? true;
-  const preferredTypes = options?.preferredTypes ?? [];
 
   // trace is only available when backend runs with API_DEBUG=True
   const userTrace = usePlannerStore((s) => s.results?.trace?.user);
@@ -18,24 +17,20 @@ export function useActivitiesQuery(
   const storeSelectedKeys = usePlannerStore((s) => s.selectedKeys);
   const storeFreeformText = usePlannerStore((s) => s.freeformText);
   const setActivityResult = usePlannerStore((s) => s.setActivityResult);
-  const setActivityResultLlm = usePlannerStore((s) => s.setActivityResultLlm);
-  const preferLlmActivities = usePlannerStore((s) => s.preferLlmActivities[loc.location_id] ?? false);
 
   // Cache key only used for unfiltered fetches
   const results = usePlannerStore((s) => s.results);
   const activityResults = usePlannerStore((s) => s.activityResults);
-  const activityResultsLlm = usePlannerStore((s) => s.activityResultsLlm);
+  const imagesLoaded = usePlannerStore((s) => s.imagesLoaded);
   
-  const baseCache = preferLlmActivities ? activityResultsLlm[loc.location_id] : activityResults[loc.location_id];
-  const useCache = preferredTypes.length === 0;
-  const cached = useCache ? baseCache : undefined;
+  const cached = activityResults[loc.location_id];
 
   // Sequential loading support: start fetching only if the card above has finished loading
   const locations = results?.locations ?? [];
   const currentIndex = locations.findIndex((l) => l.location_id === loc.location_id);
   const previousLocation = currentIndex > 0 ? locations[currentIndex - 1] : null;
-  const isCurrentFetched = !!activityResults[loc.location_id] || !!activityResultsLlm[loc.location_id];
-  const previousFetched = previousLocation ? !!activityResults[previousLocation.location_id] || !!activityResultsLlm[previousLocation.location_id] : true;
+  const isCurrentFetched = !!activityResults[loc.location_id];
+  const previousFetched = previousLocation ? !!activityResults[previousLocation.location_id] : true;
 
   const payload: ActivitiesPayload = {
     text: userTrace?.input?.text || storePayload?.text || storeFreeformText || "",
@@ -50,7 +45,6 @@ export function useActivitiesQuery(
       geo: loc.geo,
     },
     top_k_activities: 5,
-    ...(preferredTypes.length > 0 ? { preferred_types: preferredTypes } : {}),
   };
 
   // Generate preference signature to prevent cache pollution
@@ -61,35 +55,25 @@ export function useActivitiesQuery(
       "activities",
       loc.location_id,
       preferenceSignature,
-      [...preferredTypes].sort().join(","),
-      preferLlmActivities,
     ],
     queryFn: async () => {
-      const data = preferLlmActivities
-        ? await apiClient.activities(payload)
-        : await apiClient.activitiesV2(payload);
+      const data = await apiClient.activities(payload);
       
-      if (preferredTypes.length === 0) {
-        if (preferLlmActivities) {
-          setActivityResultLlm(loc.location_id, data);
-        } else {
-          setActivityResult(loc.location_id, data);
-        }
+      setActivityResult(loc.location_id, data);
 
-        // Auto-save/update history session if user is logged in
-        if (typeof window !== "undefined") {
-          try {
-            const user = sessionStorage.getItem("auth_user");
-            if (user) {
-              const parsed = JSON.parse(user);
-              if (parsed?.userId) {
-                // Async database update
-                usePlannerStore.getState().saveHistorySession(parsed.userId);
-              }
+      // Auto-save/update history session if user is logged in
+      if (typeof window !== "undefined") {
+        try {
+          const user = sessionStorage.getItem("auth_user");
+          if (user) {
+            const parsed = JSON.parse(user);
+            if (parsed?.userId) {
+              // Async database update
+              usePlannerStore.getState().saveHistorySession(parsed.userId);
             }
-          } catch (e) {
-            // Ignore storage errors
           }
+        } catch (e) {
+          // Ignore storage errors
         }
       }
       return data;

@@ -21,7 +21,7 @@ export function FeedbackBox({ loc }: Props) {
     const storePayload = store.payload;
     const storeFreeformText = store.freeformText;
     const storeSelectedKeys = store.selectedKeys;
-    const preferLlm = store.preferLlmActivities[loc.location_id] ?? false;
+
 
     mutation.mutate({
       feedback: text.trim(),
@@ -32,8 +32,6 @@ export function FeedbackBox({ loc }: Props) {
       tags_k: userTrace?.n1_embedding?.tags_k ?? 0,
       user_vectors: userTrace?.user_vectors ?? {},
       location: { location_id: loc.location_id, metadata: loc.metadata ?? {} },
-      v2: !preferLlm,
-      prefer_llm: preferLlm,
     });
     setText("");
   };

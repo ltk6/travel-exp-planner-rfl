@@ -53,14 +53,6 @@ export function LocationDetail({ location, onClose }: Props) {
                 <ImageIcon className="size-8 opacity-40" />
               </div>
             )}
-            {location.images_count > 1 ? (
-              <Badge
-                variant="outline"
-                className="absolute right-2 bottom-2 border-white/30 bg-black/60 text-[10px] text-white"
-              >
-                +{location.images_count - 1} ảnh
-              </Badge>
-            ) : null}
           </div>
 
           {/* Description */}

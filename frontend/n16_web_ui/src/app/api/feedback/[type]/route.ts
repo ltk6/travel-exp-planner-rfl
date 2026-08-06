@@ -3,7 +3,7 @@ import { proxyToBackend } from "@/lib/proxy";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ALLOWED = new Set(["recommend", "activities"]);
+const ALLOWED = new Set(["locations", "activities"]);
 
 export async function POST(req: Request, ctx: { params: Promise<{ type: string }> }) {
   const { type } = await ctx.params;

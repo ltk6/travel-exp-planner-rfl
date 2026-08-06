@@ -9,5 +9,5 @@ export const dynamic = "force-dynamic";
  * cũng dùng POST với empty body upstream để qua được proxy hiện tại.
  */
 export async function GET() {
-  return proxyToBackend("/locations", {});
+  return proxyToBackend("/explore", {});
 }

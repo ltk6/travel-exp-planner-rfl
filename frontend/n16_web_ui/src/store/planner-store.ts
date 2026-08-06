@@ -43,10 +43,11 @@ type PlannerState = {
   results: RecommendResponse | null;
   setResults: (r: RecommendResponse | null) => void;
 
+  imagesLoaded: boolean;
+  setImagesLoaded: (b: boolean) => void;
+
   activityResults: Record<string, ActivitiesResponse>;
-  activityResultsLlm: Record<string, ActivitiesResponse>;
   setActivityResult: (locId: string, data: ActivitiesResponse) => void;
-  setActivityResultLlm: (locId: string, data: ActivitiesResponse) => void;
   clearActivityResults: () => void;
 
   /** ID of the current history session (set after /recommend save, used to update with activities). */
@@ -62,8 +63,6 @@ type PlannerState = {
   focusedAt: number;
   setFocusedLocation: (id: string | null) => void;
 
-  preferLlmActivities: Record<string, boolean>;
-  setPreferLlmActivities: (locId: string, p: boolean) => void;
   clearActivityResultForLocation: (locId: string) => void;
 
   saveHistorySession: (userId: number) => Promise<void>;
@@ -113,13 +112,13 @@ export const usePlannerStore = create<PlannerState>()(
       results: null,
       setResults: (results) => set({ results }),
 
+      imagesLoaded: true,
+      setImagesLoaded: (imagesLoaded) => set({ imagesLoaded }),
+
       activityResults: {},
-      activityResultsLlm: {},
       setActivityResult: (locId, data) =>
         set((s) => ({ activityResults: { ...s.activityResults, [locId]: data } })),
-      setActivityResultLlm: (locId, data) =>
-        set((s) => ({ activityResultsLlm: { ...s.activityResultsLlm, [locId]: data } })),
-      clearActivityResults: () => set({ activityResults: {}, activityResultsLlm: {} }),
+      clearActivityResults: () => set({ activityResults: {} }),
 
       currentSessionId: null,
       setCurrentSessionId: (currentSessionId) => set({ currentSessionId }),
@@ -128,22 +127,15 @@ export const usePlannerStore = create<PlannerState>()(
       focusedAt: 0,
       setFocusedLocation: (id) => set({ focusedLocationId: id, focusedAt: Date.now() }),
 
-      preferLlmActivities: {},
-      setPreferLlmActivities: (locId, preferLlm) =>
-        set((s) => ({
-          preferLlmActivities: { ...s.preferLlmActivities, [locId]: preferLlm },
-        })),
       clearActivityResultForLocation: (locId) =>
         set((s) => {
           const next = { ...s.activityResults };
-          const nextLlm = { ...s.activityResultsLlm };
           delete next[locId];
-          delete nextLlm[locId];
-          return { activityResults: next, activityResultsLlm: nextLlm };
+          return { activityResults: next };
         }),
 
       saveHistorySession: async (userId) => {
-        const { payload, results, preferLlmActivities, activityResults, activityResultsLlm, currentSessionId } = usePlannerStore.getState();
+        const { payload, results, activityResults, currentSessionId } = usePlannerStore.getState();
         if (!payload || !results) return;
 
         try {
@@ -152,9 +144,7 @@ export const usePlannerStore = create<PlannerState>()(
             input_data: payload,
             output_data: {
               ...results,
-              preferLlmActivities,
               activityResults,
-              activityResultsLlm,
             },
             history_id: currentSessionId || undefined,
           });
@@ -174,12 +164,11 @@ export const usePlannerStore = create<PlannerState>()(
           imagesB64: [],
           payload: null,
           results: null,
+          imagesLoaded: true,
           activityResults: {},
-          activityResultsLlm: {},
           currentSessionId: null,
           focusedLocationId: null,
           focusedAt: 0,
-          preferLlmActivities: {},
         }),
     }),
     {

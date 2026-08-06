@@ -14,8 +14,7 @@ import { cn } from "@/lib/utils";
 export function ResultView() {
   const results = usePlannerStore((s) => s.results);
   const activityResults = usePlannerStore((s) => s.activityResults);
-  const activityResultsLlm = usePlannerStore((s) => s.activityResultsLlm);
-  const preferLlmActivities = usePlannerStore((s) => s.preferLlmActivities);
+
 
   const locations = results?.locations ?? [];
   const topLocations = locations.slice(0, 5);
@@ -24,10 +23,7 @@ export function ResultView() {
     const data = {
       saved_at: new Date().toISOString(),
       locations: topLocations.map((loc, i) => {
-        const preferLlm = preferLlmActivities[loc.location_id] ?? false;
-        const currentActivities = preferLlm
-          ? activityResultsLlm[loc.location_id]
-          : activityResults[loc.location_id];
+        const currentActivities = activityResults[loc.location_id];
         return {
           rank: i + 1,
           location_id: loc.location_id,

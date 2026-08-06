@@ -72,6 +72,7 @@ export type RefinedFeedback = {
 export type UserVectors = Record<string, unknown>;
 
 export type RecommendResponse = {
+  status?: string;
   locations: LocationResult[];
   trace?: {
     user?: {
@@ -123,10 +124,7 @@ export type ActivitiesResponse = {
   location_id?: string;
   activities: ActivityResult[];
   meta?: {
-    provider_used?: string;
     model_used?: string;
-    fallback_used?: boolean;
-    fallback_n5_count?: number;
   };
   refined?: RefinedFeedback;
 };
@@ -139,13 +137,10 @@ export type ActivitiesPayload = {
   tags_k: number;
   user_vectors: UserVectors;
   location: { location_id: string; metadata: LocationMetadata; geo?: LocationGeo };
-  /** UI chip selection — boost these activity_types in the N9-N14 processor. */
-  preferred_types?: string[];
-  provider?: string | null;
   top_k_activities?: number;
 };
 
-export type FeedbackEndpoint = "recommend" | "activities";
+export type FeedbackEndpoint = "locations" | "activities";
 
 export type FeedbackPayload = {
   feedback: string;

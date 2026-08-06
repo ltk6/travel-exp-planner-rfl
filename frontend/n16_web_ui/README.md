@@ -1,17 +1,17 @@
 # N16 Web UI Module (Next.js)
 
-N16 is the primary frontend for Travel Experience Planner. It is a Next.js 15 / React 19 web application built with the App Router, Tailwind CSS, and shadcn/ui. It replaced the legacy Streamlit UI (N7) and communicates exclusively with the Flask backend (N8).
+N16 is the primary frontend for Travel Experience Planner. It is a Next.js 15 / React 19 web application built with the App Router, Tailwind CSS, and shadcn/ui. It communicates exclusively with the N18 FastAPI backend.
 
 ## Responsibilities
 
 - Provide the main user-facing interface for travel planning
 - Collect user input through a multi-step Wizard (questionnaire + free-text + image upload)
-- Call N8 API endpoints and progressively render ranked results
+- Call N18 API endpoints and progressively render ranked results
 - Lazy-load location images independently of the main data response
 - Manage global session state (auth, results, activity lists) via Zustand
 - Provide an Explore mode (`/explore`) to browse all available locations
 - Provide a Profile page (`/profile`) for registration, login, and recommendation history
-- Handle feedback loops: refine recommendations and activity lists via N8 feedback endpoints
+- Handle feedback loops: refine recommendations and activity lists via N18 feedback endpoints
 
 ## Tech Stack
 
@@ -103,7 +103,7 @@ frontend/n16_web_ui/src/
 
 ### 2. Explore Mode (`/explore`)
 
-- Calls `POST /locations` to load all available locations as slim cards
+- Calls `GET /locations` to load all available locations as slim cards
 - Each card shows the location name, a thumbnail, and tags
 - No AI ranking — purely a browse interface for the database
 
@@ -122,21 +122,19 @@ All cross-page state lives in the Zustand store at `src/store/planner-store.ts`:
 
 | State key              | Purpose                                           |
 | ---------------------- | ------------------------------------------------- |
-| `wizardInput`          | Captured questionnaire + prompt + image payload   |
-| `locations`            | Ranked location results from `/recommend`         |
-| `activitiesByLocation` | Per-location activity lists from `/activities/v2` |
-| `user`                 | Authenticated user info (`user_id`, `username`)   |
-| `history`              | Recommendation history list                       |
-| `isLoading`            | Global loading flag for skeleton rendering        |
+| `payload`              | Captured recommendation payload                   |
+| `results`              | Ranked location results from `/recommend`         |
+| `activityResults`      | Per-location activity lists from `/activities/v2` |
+| `currentSessionId`     | Current history ID for saving updates             |
 
 ---
 
 ## API Communication
 
-N16 communicates with N8 through **Next.js API Routes** (`src/app/api/`). These routes act as a proxy layer that:
+N16 communicates with N18 through **Next.js API Routes** (`src/app/api/`). These routes act as a proxy layer that:
 
 - Attaches the `X-Internal-Key` header (kept server-side, never exposed to the browser)
-- Forwards request bodies to the Flask backend
+- Forwards request bodies to the FastAPI backend
 - Streams or returns JSON responses to the client
 
 This keeps the internal API key out of client-side bundles.
@@ -144,7 +142,7 @@ This keeps the internal API key out of client-side bundles.
 Backend base URL is configured via `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:8000
 INTERNAL_API_KEY=your_secret_key
 ```
 
@@ -156,7 +154,7 @@ N16 uses a pure lazy-loading model for location images:
 
 1. `/recommend` returns only image URL strings: `/api/images/{location_id}_{idx}.jpg`
 2. Next.js `<Image>` components use those URLs with `loading="lazy"`
-3. Each image is fetched from the Next.js image proxy → N8 → PostgreSQL only when the card enters the viewport
+3. Each image is fetched from the Next.js image proxy → N18 → PostgreSQL only when the card enters the viewport
 4. Missing images return a 1×1 transparent PNG fallback — no broken image icons
 
 This eliminates the need to wait for large image blobs before rendering the results page.

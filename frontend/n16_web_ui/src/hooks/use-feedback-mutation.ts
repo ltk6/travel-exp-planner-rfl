@@ -55,14 +55,14 @@ export function useActivityFeedback(locId: string) {
     mutationFn: (body: ActivityFeedbackBody) =>
       apiClient.feedback<ActivitiesResponse>("activities", body),
     onSuccess: (data) => {
+      if (data.status === "unchanged") {
+        const explanation = data.refined?.explanation?.trim() || "Hệ thống chưa rõ ý bạn muốn thay đổi điều gì.";
+        toast.info("Không có thay đổi", { description: explanation, duration: 6000 });
+        return;
+      }
       const finalLocId = data.location_id ?? locId;
       const store = usePlannerStore.getState();
-      const preferLlm = store.preferLlmActivities[finalLocId] ?? false;
-      if (preferLlm) {
-        store.setActivityResultLlm(finalLocId, data);
-      } else {
-        store.setActivityResult(finalLocId, data);
-      }
+      store.setActivityResult(finalLocId, data);
       qc.setQueriesData({ queryKey: ["activities", finalLocId] }, data);
       showRefinedToast(data.refined, "Đã cập nhật danh sách hoạt động.");
     },
@@ -80,10 +80,20 @@ export function useRecommendFeedback() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: RecommendFeedbackBody) =>
-      apiClient.feedback<RecommendResponse>("recommend", body),
+      apiClient.feedback<RecommendResponse>("locations", body),
     onSuccess: (data) => {
-      prefetchLocationImages(data);
+      if (data.status === "unchanged") {
+        const explanation = data.refined?.explanation?.trim() || "Hệ thống chưa rõ ý bạn muốn thay đổi điều gì.";
+        toast.info("Không có thay đổi", { description: explanation, duration: 6000 });
+        return;
+      }
+      const store = usePlannerStore.getState();
+      store.setImagesLoaded(false);
       setResults(data);
+      
+      prefetchLocationImages(data).finally(() => {
+        store.setImagesLoaded(true);
+      });
       clearActivities();
       qc.removeQueries({ queryKey: ["activities"] });
       showRefinedToast(data.refined, "Đã tạo lại lộ trình theo phản hồi của bạn.");

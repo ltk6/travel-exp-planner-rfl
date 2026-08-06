@@ -69,7 +69,7 @@ export default function AboutPage() {
             </div>
             <div>
               <CardTitle>Stack kỹ thuật</CardTitle>
-              <CardDescription>Frontend modern · Backend Flask + LLM chain</CardDescription>
+              <CardDescription>Frontend modern · Backend FastAPI + LLM chain</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -87,7 +87,7 @@ export default function AboutPage() {
           <div>
             <div className="text-foreground font-semibold">Backend</div>
             <ul className="text-muted-foreground mt-1 list-inside list-disc space-y-0.5">
-              <li>Flask N8 Orchestrator (port 5000)</li>
+              <li>FastAPI N18 Orchestrator (port 8000)</li>
               <li>N1 Embedding (BGE-M3) · N2 Image Processing · N3 PostgreSQL</li>
               <li>N4/N6 ranking · N5 activity generation · N17 feedback</li>
               <li>LLM chain: Groq (llama-3.3-70b → qwen-32b → llama-3.1-8b → scout)</li>
