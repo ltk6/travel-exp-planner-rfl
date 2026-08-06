@@ -96,19 +96,19 @@ if !WAIT! gtr 30 (
     echo [WARN] Frontend slow to start - opening browser anyway
     goto OPEN_BROWSER
 )
-python -c "import urllib.request; urllib.request.urlopen('http://localhost:3000', timeout=1)" >nul 2>&1
+python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000', timeout=1)" >nul 2>&1
 if errorlevel 1 (
     python -c "import time; time.sleep(2)"
     goto WAIT_LOOP
 )
 echo [OK] Frontend ready after ~!WAIT! polls
 :OPEN_BROWSER
-start "" http://localhost:3000
+start "" http://127.0.0.1:3000
 
 echo.
 echo [SUCCESS] Services:
-echo   Frontend:  http://localhost:3000
-echo   Backend:   http://localhost:8000/health
+echo   Frontend:  http://127.0.0.1:3000
+echo   Backend:   http://127.0.0.1:8000/health
 echo.
 pause
 endlocal

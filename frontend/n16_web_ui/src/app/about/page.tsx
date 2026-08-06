@@ -90,7 +90,7 @@ export default function AboutPage() {
               <li>FastAPI N18 Orchestrator (port 8000)</li>
               <li>N1 Embedding (BGE-M3) · N2 Image Processing · N3 PostgreSQL</li>
               <li>N4/N6 ranking · N5 activity generation · N17 feedback</li>
-              <li>LLM chain: Groq (llama-3.3-70b → qwen-32b → llama-3.1-8b → scout)</li>
+              <li>LLM chain: Groq (llama-3.3-70b → qwen3.6-27b → llama-3.1-8b → gpt-oss-120b → gpt-oss-20b)</li>
             </ul>
           </div>
         </CardContent>

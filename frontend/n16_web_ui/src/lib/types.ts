@@ -87,7 +87,7 @@ export type RecommendResponse = {
       user_vectors?: UserVectors;
     };
   };
-  /** Present on feedback/recommend response — shows how N17 refined the original input. */
+  /** Present on feedback/locations response — shows how N17 refined the original input. */
   refined?: RefinedFeedback;
 };
 

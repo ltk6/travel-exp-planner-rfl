@@ -35,7 +35,7 @@ npm install
 npm run dev
 ```
 
-The app runs at [http://localhost:3000](http://localhost:3000).
+The app runs at [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
 For a full-stack startup (backend + frontend together), use the project root script:
 
@@ -97,8 +97,8 @@ frontend/n16_web_ui/src/
 2. On submit, N16 calls `POST /recommend` via the Next.js API route proxy
 3. While waiting, skeleton loaders are shown
 4. On response, ranked location cards are rendered immediately; image URLs are lazy-loaded by the browser as cards scroll into view
-5. Activity drawers are opened per-location on demand via `POST /activities/v2`
-6. A global feedback panel allows users to refine the full result list via `POST /feedback/recommend`
+5. Activity drawers are opened per-location on demand via `POST /activities`
+6. A global feedback panel allows users to refine the full result list via `POST /feedback/locations`
 7. Each location card has a local feedback button for activity refinement via `POST /feedback/activities`
 
 ### 2. Explore Mode (`/explore`)
@@ -124,7 +124,7 @@ All cross-page state lives in the Zustand store at `src/store/planner-store.ts`:
 | ---------------------- | ------------------------------------------------- |
 | `payload`              | Captured recommendation payload                   |
 | `results`              | Ranked location results from `/recommend`         |
-| `activityResults`      | Per-location activity lists from `/activities/v2` |
+| `activityResults`      | Per-location activity lists from `/activities` |
 | `currentSessionId`     | Current history ID for saving updates             |
 
 ---
@@ -142,7 +142,7 @@ This keeps the internal API key out of client-side bundles.
 Backend base URL is configured via `.env.local`:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 INTERNAL_API_KEY=your_secret_key
 ```
 
