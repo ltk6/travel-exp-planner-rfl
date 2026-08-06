@@ -7,10 +7,10 @@ from typing import List, Dict, Any, Optional
 # =============================================================================
 
 class N3LocationVectors(BaseModel):
-    text: Optional[List[float]] = None
-    aug_text: Optional[List[float]] = None
-    aug_tags: Optional[List[float]] = None
-    img_desc: Optional[List[float]] = None
+    text: Optional[Any] = None
+    aug_text: Optional[Any] = None
+    aug_tags: Optional[Any] = None
+    img_desc: Optional[Any] = None
 
 class N3LocationMetadata(BaseModel):
     name: Optional[str] = Field(default="Unnamed Location", description="The user-friendly name of the location.")
@@ -36,10 +36,7 @@ class N3GetLocationsOutput(BaseModel):
     status: Optional[str] = "success"
     total: Optional[int] = 0
     data: List[N3LocationModel] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    
 
-# =============================================================================
 # USER AUTH
 # =============================================================================
 

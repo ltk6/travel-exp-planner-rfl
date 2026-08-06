@@ -58,14 +58,8 @@ def _get_connection():
     delay = 0.5
     for attempt in range(1, max_retries + 1):
         try:
-            conn = psycopg2.connect(PG_URI, cursor_factory=RealDictCursor)
+            conn = psycopg2.connect(PG_URI, cursor_factory=RealDictCursor, connect_timeout=3)
             conn.autocommit = True
-            try:
-                cur = conn.cursor()
-                cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-                cur.close()
-            except Exception as ex:
-                logger.warning(f"Failed to create vector extension: {ex}")
             register_vector(conn)
             _DB_CIRCUIT_BREAKER.record_success()
             return conn
