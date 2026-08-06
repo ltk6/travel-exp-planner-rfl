@@ -24,23 +24,24 @@ _TRANSPARENT_PNG = (
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @general_router.get("/health")
-async def health() -> dict:
-    from backend.modules.n5_activity_generation.llm_provider import get_llm_chain
+async def health_liveness() -> dict:
+    """Liveness Probe: Ultra-lightweight, instantly returns 200 OK (<= 5ms)."""
+    return {"status": "ok"}
 
-    # N1 embedding model
-    try:
-        from backend.modules.n1_embedding.embedder import get_model
-        n1_status = "ok" if get_model() is not None else "not_loaded"
-    except Exception as exc:
-        logger.error("N1 embedding model failed to load: %s", exc)
-        n1_status = "error"
+
+@general_router.get("/health/deep")
+async def health_deep() -> dict:
+    """Diagnostics / Readiness Probe: Comprehensive multi-module verification."""
+    from backend.n18_orchestrator.app import _models_loaded
+    from backend.modules.n5_activity_generation.llm_provider import get_llm_chain
 
     # N3 database
     try:
-        from backend.n3_database.db_manager import _get_connection
-        conn = _get_connection()
-        conn.close()
-        n3_status = "db_connected"
+        from backend.n3_database.db_manager import _DB_CIRCUIT_BREAKER
+        if _DB_CIRCUIT_BREAKER.state == "CLOSED":
+            n3_status = "db_connected"
+        else:
+            n3_status = "file_storage"
     except Exception:
         n3_status = "file_storage"
 
@@ -48,7 +49,7 @@ async def health() -> dict:
     return {
         "status": "ok",
         "services": {
-            "n1_embedding":   n1_status,
+            "n1_embedding":   "ok" if _models_loaded else "not_loaded",
             "n3_database":    n3_status,
             "llms_available": bool(GROQ_API_KEY),
         },
