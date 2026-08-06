@@ -16,14 +16,10 @@ N5 generates candidate activities for each location in a result set. It uses an 
 ```
 backend/modules/n5_activity_generation/
 ├── __init__.py                  # Re-exports generate_activities
-├── n5_activity_generator.py     # Orchestration: normalize → LLM → template → dedup
-├── n5_llm_generator.py          # LLM prompt construction and response parsing
-├── n5_activity_templates.py     # Template bank per activity type and location profile
-├── providers/
-│   ├── __init__.py              # get_llm_chain() — returns ordered provider list
-│   ├── base.py                  # LLMProvider base class with retry + rate-limit logic
-│   ├── groq_provider.py         # Groq API provider
-│   └── gemini_provider.py       # Gemini API provider
+├── pipeline.py     # Orchestration: normalize → LLM → template → dedup
+├── llm_provider.py          # LLM prompt construction and response parsing
+├── config.py
+├── schemas.py
 └── requirements.txt
 ```
 
