@@ -16,7 +16,9 @@ N17 refines a travel query after the user provides natural-language feedback. It
 ```
 backend/modules/n17_feedback_processing/
 ├── __init__.py              # Re-exports process_feedback
-├── feedback_processor.py    # Prompt construction, LLM call, parse + validate, fallback
+├── pipeline.py    # Prompt construction, LLM call, parse + validate, fallback
+├── config.py
+├── schemas.py
 └── requirements.txt
 ```
 

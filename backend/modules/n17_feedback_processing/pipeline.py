@@ -4,35 +4,39 @@ import random
 import urllib.request
 import urllib.error
 from typing import Dict, List, Optional, Any, Union
-from backend.shared.contracts.n17_contracts import N17FeedbackInput
 
 from config import (
-    setup_logging, 
-    LLM_MAX_RETRIES, 
-    LLM_RETRY_WAIT_BASE,
-    GROQ_API_KEY, 
-    GROQ_API_URL, 
-    GROQ_MODEL_NAME, 
-    GROQ_MODELS,
-    USER_AGENT
+    setup_logging,
+    GROQ_API_KEY,
 )
-from backend.shared.maps.tags import ALL_TAGS
+from .config import (
+    MAX_RETRIES,
+    RETRY_WAIT_BASE,
+    LLM_TEMP,
+    GROQ_API_URL,
+    GROQ_MODELS,
+    LLM_CHAIN,
+    USER_AGENT,
+)
+logger = setup_logging("N17")
 
-logger = setup_logging("N17.processor")
+from backend.shared.maps.activity_tags import ALL_TAGS
+from .schemas import N17FeedbackInput
+
 
 VALID_TAGS = sorted(ALL_TAGS.keys())
 VALID_TAGS_SET = set(ALL_TAGS.keys())
 
 def call_groq_direct(prompt: str, system: str = "You are a travel expert. Respond with pure JSON only.", model: str = None) -> tuple:
     """Bare logic to call Groq without complex provider registry."""
-    target_model = GROQ_MODELS.get(model, model) if model else GROQ_MODEL_NAME
+    target_model = GROQ_MODELS.get(model, model)
     payload = {
         "model": target_model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ],
-        "temperature": 0.1,
+        "temperature": LLM_TEMP,
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
@@ -92,14 +96,14 @@ Nhiệm vụ:
 QUAN TRỌNG VỀ PHẢN HỒI VÔ NGHĨA / KHÔNG PHÙ HỢP (WEIRD/SPAM/IRRELEVANT FEEDBACKS):
 - Nếu phản hồi mới ("{feedback_text}") là vô nghĩa, spam, ký tự vô nghĩa (ví dụ: "asdasd", "qweqwe", "123123"), hoặc hoàn toàn không liên quan gì đến việc lập kế hoạch du lịch, địa điểm du lịch, sở thích đi lại:
   * Tuyệt đối KHÔNG thay đổi gì cả.
-  * Giữ nguyên giá trị cũ: 'refined_text' PHẢI là "{user_input}", 'refined_tags' PHẢI là chính xác danh sách cũ [{tags_str}], và 'refined_img_desc' PHẢI là "{img_desc}".
+  * HÃY TRẢ VỀ: 'refined_text' là rỗng (""), 'refined_tags' là rỗng ([]), và 'refined_img_desc' là rỗng ("").
   * Trong trường 'explanation', trả về một câu phản hồi lịch sự, thân thiện bằng tiếng Việt giải thích rằng hệ thống không hiểu rõ yêu cầu này và mong muốn khách hàng mô tả rõ ràng hơn về sở thích, địa điểm hoặc yêu cầu điều chỉnh lộ trình du lịch (Ví dụ: "Xin lỗi, tôi chưa hiểu rõ yêu cầu này của bạn. Bạn có thể chia sẻ cụ thể hơn về những mong muốn điều chỉnh cho chuyến đi không?").
 
 HÃY TRẢ VỀ JSON:
 {{
-  "refined_text": "Chuỗi văn bản mới (hoặc giữ nguyên u_input nếu feedback vô nghĩa)",
-  "refined_tags": ["tag1", "..."],
-  "refined_img_desc": "Mô tả ảnh mới hoặc để trống/giữ nguyên",
+  "refined_text": "Chuỗi văn bản mới (hoặc rỗng nếu feedback vô nghĩa)",
+  "refined_tags": ["tag1", "..."] (hoặc [] nếu feedback vô nghĩa),
+  "refined_img_desc": "Mô tả ảnh mới (hoặc rỗng)",
   "explanation": "Câu thoại tiếng Việt trực tiếp giải thích sự thay đổi hoặc phản hồi lịch sự nếu feedback vô nghĩa"
 }}
 
@@ -135,13 +139,9 @@ def _parse_feedback_response(response_text: str) -> Optional[Dict]:
 
 def call_llm(
     prompt: str,
-    retries: int = LLM_MAX_RETRIES,
     chain_override: Optional[str] = None,
-    temperature: float = 0.1,
 ) -> tuple:
     """Barebones LLM call directly to Groq with chain support."""
-    from config import LLM_CHAIN
-    
     # Resolve models to try
     if chain_override:
         models_to_try = [chain_override]
@@ -150,10 +150,10 @@ def call_llm(
         if not models_to_try:
             models_to_try = [GROQ_MODEL_NAME]
 
-    for attempt in range(retries + 1):
+    for attempt in range(MAX_RETRIES + 1):
         if attempt > 0:
             # Entire chain failed, wait before retrying the entire chain
-            wait_time = min(60.0, (LLM_RETRY_WAIT_BASE * (3 ** (attempt - 1))) + random.random())
+            wait_time = min(60.0, (RETRY_WAIT_BASE * (3 ** (attempt - 1))) + random.random())
             logger.info(f"Pass {attempt} failed for all models. Retrying entire chain in {wait_time:.2f}s...")
             time.sleep(wait_time)
 
