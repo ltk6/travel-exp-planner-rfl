@@ -15,11 +15,11 @@ These rules define the repository-specific styling and workflow conventions that
     - `chore(phase0): complete architecture audit and standardize docs`
 
 ## Documentation Style
-- All Markdown documents (`README.md`, ADRs, highlights, module documentations) and all generated text must follow a **minimalistic and professional** style.
-- Avoid verbose explanations or flowery language; keep points direct, brief, and structured.
-- Use clean formatting, clear heading hierarchies, and standard Git-aligned markdown components.
-- Do not add conversational fluff or redundant walkthrough summaries.
-- Proactively update module and service `README.md` files to accurately reflect changes in code structure, ports, configuration, and interface contracts.
+- **Tone & Voice:** Use a direct, active, and professional tone. Avoid conversational fluff, academic phrasing, and AI idioms ("utilizing", "leveraging"). Lead with facts.
+- **Formatting:** Keep documents minimalistic. Use clean hierarchies and standard Git markdown. Keep tables to one concise sentence per row.
+- **Content:** Preserve actionable details (timing, test counts, outputs), but do not embed study guides, tutorials, or redundant walkthroughs. Cross-reference existing docs instead of restating.
+- **Structure:** Use **Goal → Tasks → Docs → Deliverables** for plans. Consolidate repeated triggers into reference tables.
+- **Maintenance:** Proactively update `README.md` files to reflect structural or contract changes.
 
 ## Project Structure
 - **`backend/modules/`** — In-process pipeline modules (N0–N6, N17). Run inside the N18 orchestrator process.
@@ -57,4 +57,5 @@ These rules define the repository-specific styling and workflow conventions that
     - **[Component Name]:** [Detail of modification]
     ```
 
-
+## Ignored Directories
+- **`notes/`**: Ignore files in this directory. Do not attempt to format, edit, or delete files in the `notes/` directory, as they are not tracked by version control and are used as scratchpads, unless explicitly instructed by the user.

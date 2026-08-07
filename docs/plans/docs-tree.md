@@ -1,6 +1,6 @@
 # Documentation Tree
 
-This document outlines the planned structure of all documentation and artifacts generated throughout the 10-month capstone project. By Phase 8, the repository should reflect this exact hierarchy.
+Planned structure of documentation and deliverables for throughout the 10-month capstone project.
 
 ```text
 /
@@ -85,15 +85,3 @@ This document outlines the planned structure of all documentation and artifacts 
 └── demo/
     └── script.md                              # (Phase 8) Narration script for the final 6–9 minute demo video
 ```
-
-## Documentation Categories
-
-| Category | Purpose | Key Files |
-| :--- | :--- | :--- |
-| **Living Documents** | Continuously updated tracking of project metrics, build logs, and high-level status. | `docs/highlights.md`, `docs/ephemeral-infra-log.md`, `README.md` |
-| **Architecture & Design** | System design evolution, API contracts, and Architecture Decision Records (ADRs). | `ARCHITECTURE.md`, `docs/adrs/*`, `docs/architecture-as-is.md`, `docs/N1-embed-api.md` |
-| **Operations & Runbooks** | Actionable troubleshooting steps, deployment guides, chaos testing, and postmortems. | `docs/runbooks/*`, `docs/deployment-runbook.md`, `docs/incident-2026-12-n5-429-storm.md` |
-| **Infrastructure as Code** | Terraform modules, Kubernetes manifests, environment configs, and provisioning scripts. | `infra/*`, `k8s/*`, `scripts/*` |
-| **Testing & Benchmarks** | Load tests, smoke tests, unit/integration tests, and baseline performance data. | `loadtests/*`, `tests/*`, `benchmarks/*` |
-| **Metrics & Evidence** | Quantified comparisons and raw performance references. | `docs/golden-path-metrics.md`, `benchmarks/results/2026-08-baseline.json` |
-| **Final Presentation** | Output deliverables, demo scripts, platform entry points, resumes, and auto-generated API specs. | `video-essay/script.md`, `docs/openapi.json`, `PLATFORM.md`, `resumes/*` |
