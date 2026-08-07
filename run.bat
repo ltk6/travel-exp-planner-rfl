@@ -70,8 +70,17 @@ echo =======================================
 
 set BACKEND_RUNNING=0
 set FRONTEND_RUNNING=0
+set N1_RUNNING=0
 python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.5); s.connect(('127.0.0.1', 8000))" >nul 2>&1 && set BACKEND_RUNNING=1
 python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.5); s.connect(('127.0.0.1', 3000))" >nul 2>&1 && set FRONTEND_RUNNING=1
+python -c "import socket; s = socket.socket(socket.AF_INET, socket.SOCK_STREAM); s.settimeout(0.5); s.connect(('127.0.0.1', 8001))" >nul 2>&1 && set N1_RUNNING=1
+
+if "%N1_RUNNING%"=="1" (
+    echo [OK] N1 Embedding Service already on :8001 - skip launching
+) else (
+    echo [INFO] Launching N1 Embedding Service on :8001...
+    start "Travel Planner - N1 Embedding (:8001)" cmd /k "call venv\Scripts\activate.bat && set PYTHONPATH=%cd% && python -m backend.services.n1_embedding.app"
+)
 
 if "%BACKEND_RUNNING%"=="1" (
     echo [OK] Backend already on :8000 - skip launching
@@ -109,6 +118,8 @@ echo.
 echo [SUCCESS] Services:
 echo   Frontend:  http://127.0.0.1:3000
 echo   Backend:   http://127.0.0.1:8000/health
+echo   N1 Embed:  http://127.0.0.1:8001/health
 echo.
 pause
 endlocal
+

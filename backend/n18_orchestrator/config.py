@@ -5,6 +5,11 @@ General config (logging, API keys, DB) is imported directly from the global `con
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load local .env relative to this file's root if present during development
+_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(_root, ".env"))
 
 # ====================== RECOMMENDATION SETTINGS ======================
 TOP_K_LOCATIONS = int(os.getenv("TOP_K_LOCATIONS", "5"))
@@ -21,3 +26,7 @@ ALLOWED_ORIGINS = os.getenv(
 ).split(",")
 
 PROTECTED_ROUTES: set[str] = {"/locations", "/activities", "/explore"}
+
+# ====================== EXTERNAL MICROSERVICES ======================
+N1_SERVICE_URL = os.getenv("N1_SERVICE_URL", "http://127.0.0.1:8001")
+

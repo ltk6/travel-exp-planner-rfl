@@ -27,7 +27,7 @@ BATCH_SIZE = 5
 with open(INPUT_PATH, "r", encoding="utf-8") as f:
     LOCATIONS = json.load(f)
 
-from backend.modules.n1_embedding import embed_batch
+from backend.services.n1_embedding import embed_batch
 
 print("[N1] Using REAL BGE-M3 embeddings")
 

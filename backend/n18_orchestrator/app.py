@@ -39,22 +39,9 @@ _active_requests_lock = Lock()
 
 _SKIP_DEDUP_PATHS = {"/cache/reset", "/feedback/locations", "/feedback/activities"}
 
-# ── App ───────────────────────────────────────────────────────────────────────
-_models_loaded = False
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _models_loaded
-    # Load heavy models ONCE when the app boots up
-    logger.info("Pre-loading N1 embedding models...")
-    try:
-        from backend.modules.n1_embedding.embedder import get_model, get_light_model
-        get_model()
-        get_light_model()
-        _models_loaded = True
-        logger.info("N1 embedding models pre-loaded successfully.")
-    except Exception as exc:
-        logger.error("Failed to pre-load N1 embedding models: %s", exc)
+    logger.info("N18 Orchestrator booted successfully.")
     yield
 
 app = FastAPI(
