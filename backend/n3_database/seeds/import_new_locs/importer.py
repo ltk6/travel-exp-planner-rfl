@@ -13,7 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.n3_database.db_manager import save_location
-from backend.modules.n1_embedding import embed_batch
+from backend.services.n1_embedding import embed_batch
 from backend.n3_database.seeds.image_resizer import resize_and_crop
 
 SEED_PATH = PROJECT_ROOT / "backend/n3_database/seeds/locations.json"

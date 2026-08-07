@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 import time
 
-from backend.modules.n1_embedding.schemas import N1EmbedInput
+from backend.services.n1_embedding.schemas import N1EmbedInput
 
 from backend.modules.n5_activity_generation.schemas import (
     N5GenerateInput, N5UserInput, N5LocationItem, N5LocationMetadata,

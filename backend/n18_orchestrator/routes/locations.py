@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import time
 
-from backend.modules.n1_embedding.schemas import N1EmbedInput
+from backend.services.n1_embedding.schemas import N1EmbedInput
 from backend.modules.n2_image_processing.schemas import N2ImageInput
 from backend.modules.n4_location_ranking.schemas import N4RankInput, UserVectors
 from backend.modules.n17_feedback_processing.schemas import N17FeedbackInput

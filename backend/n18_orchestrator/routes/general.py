@@ -32,8 +32,19 @@ async def health_liveness() -> dict:
 @general_router.get("/health/deep")
 async def health_deep() -> dict:
     """Diagnostics / Readiness Probe: Comprehensive multi-module verification."""
-    from backend.n18_orchestrator.app import _models_loaded
+    from backend.n18_orchestrator.config import N1_SERVICE_URL
     from backend.modules.n5_activity_generation.llm_provider import get_llm_chain
+    import urllib.request
+    import json
+
+    # Check N1 service health over the network
+    try:
+        url = f"{N1_SERVICE_URL.rstrip('/')}/health"
+        with urllib.request.urlopen(url, timeout=2) as resp:
+            n1_health = json.loads(resp.read().decode("utf-8"))
+            n1_status = "ok" if n1_health.get("models_loaded") else "not_loaded"
+    except Exception:
+        n1_status = "not_loaded"
 
     # N3 database
     try:
@@ -49,7 +60,7 @@ async def health_deep() -> dict:
     return {
         "status": "ok",
         "services": {
-            "n1_embedding":   "ok" if _models_loaded else "not_loaded",
+            "n1_embedding":   n1_status,
             "n3_database":    n3_status,
             "llms_available": bool(GROQ_API_KEY),
         },
@@ -59,6 +70,7 @@ async def health_deep() -> dict:
             for p in chain
         ],
     }
+
 
 
 @general_router.get("/api/images/{filename:path}")

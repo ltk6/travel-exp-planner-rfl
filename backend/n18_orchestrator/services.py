@@ -32,29 +32,49 @@ def get_db_fingerprint(*args, **kwargs):
     return fn(*args, **kwargs)
 
 
-def embed(*args, **kwargs):
-    global embed
-    from backend.modules.n1_embedding import embed as fn
-    embed = fn
-    return fn(*args, **kwargs)
+import urllib.request
+import urllib.error
+import urllib.parse
 
-def embed_batch(*args, **kwargs):
-    global embed_batch
-    from backend.modules.n1_embedding import embed_batch as fn
-    embed_batch = fn
-    return fn(*args, **kwargs)
+from backend.n18_orchestrator.config import N1_SERVICE_URL
 
-def light_embed(*args, **kwargs):
-    global light_embed
-    from backend.modules.n1_embedding import light_embed as fn
-    light_embed = fn
-    return fn(*args, **kwargs)
 
-def light_embed_batch(*args, **kwargs):
-    global light_embed_batch
-    from backend.modules.n1_embedding import light_embed_batch as fn
-    light_embed_batch = fn
-    return fn(*args, **kwargs)
+def _n1_request(endpoint: str, payload: dict | list, params: dict | None = None) -> dict | list:
+    url = f"{N1_SERVICE_URL.rstrip('/')}/{endpoint.lstrip('/')}"
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        logger.error(f"HTTP request to N1 service failed ({url}): {exc}")
+        raise RuntimeError(f"N1 service error: {exc}")
+
+
+def embed(data: dict) -> dict:
+    return _n1_request("/embed", data)
+
+
+def embed_batch(data_list: list) -> list:
+    return _n1_request("/embed-batch", data_list)
+
+
+def light_embed(data: dict, task_type: str = "passage") -> dict:
+    return _n1_request("/light-embed", data, params={"task_type": task_type})
+
+
+def light_embed_batch(data_list: list, task_type: str = "passage") -> list:
+    return _n1_request("/light-embed-batch", data_list, params={"task_type": task_type})
+
 
 def process_image(*args, **kwargs):
     global process_image
