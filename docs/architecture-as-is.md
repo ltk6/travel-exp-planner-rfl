@@ -1,43 +1,33 @@
 # Architecture: Current State (As-Is)
 
-*Phase 0 Baseline Snapshot*
+Phase 0 baseline snapshot — August 2026.
 
-This document outlines the architecture of the Travel Experience Planner as of the Phase 0 baseline (August). The system operates as a local monolithic hub-and-spoke application, relying on in-process execution and a managed cloud database.
+## Topology
 
-## System Topology: Monolithic Hub-and-Spoke
+Monolith. All backend modules (N1–N17) run in-process inside N18 (FastAPI, `:8000`). N18 imports modules directly via `services.py` and calls them synchronously. Pydantic V2 contracts enforce boundaries.
 
-The system is designed around a central orchestrator pattern, but all backend components currently share a single compute process and memory space.
+N1 Embedding is additionally deployed as a standalone service on `:8001`.
 
-- **N18 (FastAPI Orchestrator):** The core routing and aggregation layer. It exposes REST endpoints (e.g., `/activities`, `/explore`) on `127.0.0.1:8000`.
-- **N1–N17 (The Spokes):** Domain-specific modules (e.g., N1 Embedding, N5 Activity Generation, N6 Activity Ranking) organized as Python packages within `backend/modules/`.
-- **In-Process Execution:** N18 imports these modules directly (via `backend/n18_orchestrator/services.py`) and executes their entry-point functions sequentially rather than calling them over a network boundary. N18 blocks until synchronous operations complete.
-- **Shared Contracts:** Both N18 and the spoke modules rely on shared Pydantic V2 schemas (e.g., `N5GenerateInput`, `N1EmbedInput`) to enforce data consistency.
+N16 (Next.js, `:3000`) talks to N18 over REST.
 
-## Database Dependency Layout
+| Component | Location | Port |
+|---|---|---|
+| N18 — FastAPI Orchestrator | `backend/n18_orchestrator/` | `:8000` |
+| N1 — Embedding Service | `backend/services/n1_embedding/` | `:8001` |
+| N16 — Next.js Frontend | `frontend/n16_web_ui/` | `:3000` |
+| N3 — Database | `backend/n3_database/` | Supabase (remote) |
+| N0–N6, N17 — Modules | `backend/modules/` | in-process |
 
-- **N3 (Database Module):** All database interactions route through `backend/n3_database/db_manager.py`.
-- **Managed Cloud Dependency:** N3 connects to a managed Supabase PostgreSQL instance utilizing the `pgvector` extension.
-- **Connection Management:** Connections are managed via a custom `CircuitBreaker` inside `db_manager.py` that fails-fast if Supabase becomes unreachable.
-- **Caching:** N18 maintains a hybrid memory/disk cache (`location_cache.json`) for location data to minimize network latency.
+## Database
 
-## Frontend Architecture
+N3 routes all DB access through `db_manager.py`. Connects to managed Supabase PostgreSQL with `pgvector`. A `CircuitBreaker` in `db_manager.py` fails-fast on connection loss. N18 caches location data to disk (`location_cache.json`).
 
-- **N16 (Next.js Web UI):** The user interface is built with Next.js, running independently from the backend on `127.0.0.1:3000`. It communicates exclusively with the N18 orchestrator's REST API.
+## Execution Model
 
-## Manual Execution Model
+No containers. `run.bat` creates a venv, installs deps, port-checks running services, and spawns N1, N18, and N16 as separate processes.
 
-The system currently lacks containerization and boots via a Windows batch script (`run.bat`):
+## Known Risks
 
-1. **Venv Setup:** Creates and activates a Python virtual environment.
-2. **Dependency Checks:** Compares the timestamp of a marker file against `requirements.txt` to conditionally run `pip install`.
-3. **Frontend Boot:** Checks for `node_modules` and runs `npm install` if missing.
-4. **Process Launch:** Spawns two background instances: `uvicorn` for N18 and `npm run dev` for N16.
-5. **Browser Launch:** Polls `127.0.0.1:3000` until responsive, then opens the default browser.
-
-## Problem & Risk Statement
-
-This baseline architecture carries operational risks that the roadmap addresses:
-
-1. **Lack of Isolation:** N1 (heavy BGE-M3 vector embeddings) runs in the same memory space as N18 (I/O bound API routing). A memory spike in N1 can crash the entire API. Host-OS dependencies create environmental fragility.
-2. **Cloud Dependency & Cost:** Relying on managed Supabase violates the Zero-Cost Local-First Guarantee.
-3. **Single-Point Failure under Load:** N5 (Activity Generation) relies on a single LLM API provider. N18 blocks while waiting for N5's in-process function call to finish. A `429 Too Many Requests` response from the provider will exhaust N18's worker threads, causing a cascading failure across the application (to be tested in Phase 3).
+1. **No isolation.** N1 (BGE-M3, ~1GB) shares memory with N18. A spike in N1 crashes the API.
+2. **Cloud DB dependency.** Supabase free tier — vendor lock-in and availability risk.
+3. **N5 → Groq blocking.** N5 calls Groq synchronously. A `429` blocks N18 workers, cascading into full system failure. To be tested in Phase 3.

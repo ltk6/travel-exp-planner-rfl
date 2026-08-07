@@ -1,6 +1,6 @@
 # Project Highlights & Metrics Log
 
-This is a living document, updated at the end of every phase of the 11-Month Capstone Roadmap. It serves as the single source of truth for quantified achievements, metrics, and decision outcomes utilized for the final resumes in Phase 8.
+Living document. Updated at the end of every phase.
 
 ---
 
@@ -10,8 +10,8 @@ This is a living document, updated at the end of every phase of the 11-Month Cap
 
 ### Quantified Achievements & Metrics
 
-- **Architecture Audit:** Documented the monolithic, in-process execution model (`N18` orchestrator calling `N1`-`N17` directly).
-- **Infrastructure Cost:** Currently $0 locally, reliant on a managed free-tier database (Supabase), presenting a vendor lock-in and availability risk.
+- **Architecture Audit:** Documented in [`architecture-as-is.md`](../architecture-as-is.md).
+- **Infrastructure Cost:** $0 locally. Supabase free tier for DB (vendor lock-in risk).
 - **Latency Baseline:** Recorded from local `benchmarks/results/results.json` under light concurrency:
   - `/health` (Liveness): 25.4ms P95
   - `/health/deep` (Readiness/DB): 33.0ms P95
@@ -20,7 +20,7 @@ This is a living document, updated at the end of every phase of the 11-Month Cap
   - `/feedback/locations` (N17 + Search): 3395.6ms P95
   - `/activities` (LLM Generation): 10010.4ms P95
   - `/feedback/activities` (N17 + LLM): 17470.0ms P95
-- **Reliability Risk:** Identified a critical single point of failure where N5 (Activity Generation) relies on a single LLM API. Under load, a `429 Too Many Requests` response will block the N18 orchestrator's worker threads, causing a system-wide cascade failure.
+- **Reliability Risk:** N5 calls Groq synchronously. A `429` blocks N18 workers → cascade failure. To be tested in Phase 3.
 
 ### Key Decisions (ADRs)
 
