@@ -88,31 +88,24 @@ frontend/n16_web_ui/src/
 
 ## User Flows
 
-### 1. Planner Flow (main path)
+### Planner Flow
 
-1. User opens `/(planner)` — the Wizard Slider collects:
-   - **Questionnaire**: preference chips (travel style, budget, time)
-   - **Free-text prompt**: natural language description of the desired trip
-   - **Image upload**: optional inspiration image (processed by N2 vision)
-2. On submit, N16 calls `POST /recommend` via the Next.js API route proxy
-3. While waiting, skeleton loaders are shown
-4. On response, ranked location cards are rendered immediately; image URLs are lazy-loaded by the browser as cards scroll into view
-5. Activity drawers are opened per-location on demand via `POST /activities`
-6. A global feedback panel allows users to refine the full result list via `POST /feedback/locations`
-7. Each location card has a local feedback button for activity refinement via `POST /feedback/activities`
+| Action | Description |
+| :--- | :--- |
+| **1. Input** | User enters preferences and optional images via the Wizard Slider. |
+| **2. Request** | App calls POST /recommend through the Next.js API proxy. |
+| **3. Loading** | UI displays skeleton loaders during AI ranking. |
+| **4. Results** | Browser lazy-loads images for ranked location cards. |
+| **5. Activities** | User opens activity drawers for specific locations on-demand. |
+| **6. Feedback** | User refines results via global or local feedback panels. |
 
-### 2. Explore Mode (`/explore`)
+### Auxiliary Flows
 
-- Calls `GET /locations` to load all available locations as slim cards
-- Each card shows the location name, a thumbnail, and tags
-- No AI ranking — purely a browse interface for the database
-
-### 3. Profile & History (`/profile`)
-
-- **Register / Login** via `POST /api/auth/register` and `POST /api/auth/login`
-- After login, `user_id` is stored in Zustand state (client-side session)
-- Recommendation history is fetched via `GET /api/profile/history/{user_id}` and displayed as a list of past trips
-- Clicking a past trip reloads its full result into the planner store
+| Action | Description |
+| :--- | :--- |
+| **Explore** | Loads all locations as slim cards via GET /locations. |
+| **Auth** | Handles user registration and login through standard endpoints. |
+| **History** | Fetches and reloads past recommendation sessions for the user. |
 
 ---
 

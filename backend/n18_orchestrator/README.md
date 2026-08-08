@@ -72,6 +72,6 @@ To prevent duplicate execution of long-running AI queries (e.g., double-clicks),
 
 ## Developer Guidelines
 
-1. **Lifespan Warmup:** The orchestrator utilizes a FastAPI `lifespan` handler to pre-load SentenceTransformer models into memory before accepting connections, preventing initial request timeouts.
-2. **Lazy Spoke Loading:** Heavy dependencies and sub-modules are imported inside services dynamically, preserving fast system startup.
-3. **No Uncaught Crashes:** Routes should wrap spoke calls in error-handling middleware, logging faults and returning clean JSON responses.
+- **Lifespan Warmup:** The orchestrator uses a FastAPI lifespan handler to pre-load SentenceTransformer models, preventing initial request timeouts.
+- **Dynamic Loading:** Services import heavy dependencies and sub-modules dynamically to ensure fast system startup.
+- **Error Resilience:** Route handlers wrap spoke calls in middleware to log faults and return clean JSON instead of crashing.

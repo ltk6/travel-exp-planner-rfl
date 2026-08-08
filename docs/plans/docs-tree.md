@@ -20,6 +20,7 @@ Planned structure of documentation and deliverables for throughout the 10-month 
 │   ├── golden-path-metrics.md                 # (Phase 7) Manual baseline vs. CLI-assisted time-to-first-deploy comparison
 │   │
 │   ├── adrs/                                  # (Phase 0–8) Architecture Decision Records
+│   │   ├── 0000-use-ai-for-development.md             # (Phase 0)
 │   │   ├── 0001-record-architecture-decisions.md
 │   │   ├── 0002-use-hub-and-spoke-topology.md
 │   │   ├── 0003-n1-only-extracted-spoke.md            # (Phase 1)
