@@ -1,8 +1,8 @@
-# Travel Experience Planner
+# Travel Experience Planner Reflourished
 
-Travel planning system with semantic retrieval, multimodal inputs, and dynamic LLM generation. 
+Travel planning system with semantic retrieval, multimodal inputs, and dynamic LLM generation.
 
-Application code is frozen. Feature development will resume via a CD sprint after containerization, orchestration, and reliability milestones are complete.
+This is a solo capstone project extending a legacy group-project monolith. Application code is frozen at Phase 0. Subsequent phases focus on containerization, orchestration, observability, and resilience.
 
 ## Core Features
 - **Multi-modal Semantic Search:** Processes user preferences through text and images.
@@ -60,8 +60,7 @@ The system uses a Hub-and-Spoke topology. Modules N1-N17 execute in-process with
 | N16 | Next.js Frontend |
 | N17 | Feedback processing |
 | N18 | FastAPI Orchestrator |
-
-*(Note: N7-N15 are deprecated).*
+| N7–N15 | Deprecated — not implemented |
 
 ### Current Operational Risks
 - **No isolation:** In-process execution model lacks container boundaries. Memory exhaustion in N1 crashes the N18 API.
@@ -69,5 +68,8 @@ The system uses a Hub-and-Spoke topology. Modules N1-N17 execute in-process with
 - **Synchronous blocking:** N5 calls Groq synchronously. A `429` blocks N18 worker threads, causing a system-wide cascading failure.
 
 ---
-*See [`docs/plans/roadmap.md`](docs/plans/roadmap.md) for the full infrastructure hardening roadmap.*
-*Continued iteration of the original `travel-exp-planner`. See LICENSE.*
+
+- [`docs/plans/roadmap.md`](docs/plans/roadmap.md) — full phase roadmap
+- [`docs/plans/docs-tree.md`](docs/plans/docs-tree.md) — documentation index
+- [`docs/adrs/`](docs/adrs/) — architecture decision records
+- Continued iteration of the original `travel-exp-planner`. See LICENSE.
