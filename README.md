@@ -16,31 +16,48 @@ This is a solo capstone project extending a legacy group-project monolith. Appli
 - **Embeddings:** SentenceTransformers (`intfloat/multilingual-e5-small` & `BAAI/bge-m3`)
 - **Database:** PostgreSQL with `pgvector`
 
-## Quick Start (Windows)
-Requires Python 3.10+, Node.js 18+, and PostgreSQL with `pgvector`.
+## Quick Start (Docker Compose - Phase 1)
+Requires Docker Desktop installed and running.
 
-```bash
-# Backend configuration
-cp .env.example .env
-# Edit .env and populate: PG_URI, GROQ_API_KEY, INTERNAL_API_KEY
-
-# Frontend configuration
-cd frontend/n16_web_ui
-cp .env.local.example .env.local
-# Edit .env.local and populate: INTERNAL_API_KEY
-```
-
-```bat
-run.bat
-```
-The script creates the virtual environment, installs dependencies, boots the backend on `:8000`, the frontend on `:3000`, and launches the browser.
+1. **Configure Environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and populate: GROQ_API_KEY, INTERNAL_API_KEY
+   ```
+2. **Start the Stack:**
+   ```bash
+   docker compose up -d
+   ```
+3. **Database Initialization & Seeding:**
+   *(Run this once after the initial startup)*
+   ```bash
+   venv/Scripts/python backend/n3_database/seeds/seed_with_vectors.py --reset-all
+   ```
 
 ### Service Endpoints
-| Service | URL |
-|---|---|
-| Frontend (Next.js) | http://127.0.0.1:3000 |
-| Backend API | http://127.0.0.1:8000 |
-| Health Check | http://127.0.0.1:8000/health |
+| Service | URL (Host Machine) | URL (Internal Container Network) |
+|---|---|---|
+| Frontend (Next.js - N16) | http://127.0.0.1:3000 | http://n16_web_ui:3000 |
+| Orchestrator Backend (N18) | http://127.0.0.1:8000 | http://n18_orchestrator:8000 |
+| Embedding Service (N1) | http://127.0.0.1:8001 | http://n1_embedding:8001 |
+| Local Database (Postgres - N3) | http://127.0.0.1:5432 | http://db:5432 |
+
+---
+
+## Container Network Architecture (Phase 1)
+
+```mermaid
+graph TD
+    Browser[Web Browser / Client] -->|port 3000| N16[N16 Web UI: Next.js]
+    
+    subgraph Local Docker Bridge Network
+        N16 -->|http://n18_orchestrator:8000| N18[N18 Backend Orchestrator]
+        N18 -->|postgresql://db:5432| DB[(PostgreSQL + pgvector)]
+        N18 -->|http://n1_embedding:8001| N1[N1 Embedding Container]
+    end
+```
+
+---
 
 ## Data Pipeline
 - **Vector Generation:** `python backend/n3_database/seeds/embed_locations.py` generates embeddings for locations in `locations.json`, outputting to `locations_with_vectors.json`.

@@ -1,7 +1,7 @@
 # 5. Use Docker Compose (Phase 1)
 
 **Date:** 2026-08-08
-**Status:** Proposed
+**Status:** Accepted
 
 ## Context
 

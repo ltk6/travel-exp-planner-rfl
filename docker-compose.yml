@@ -13,5 +13,46 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  n1_embedding:
+    build:
+      context: .
+      dockerfile: Dockerfile.n1
+    container_name: travel_exp_planner_rfl_n1
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - hf_cache:/app/hf_cache
+
+  n18_orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.n18
+    container_name: travel_exp_planner_rfl_n18
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      PG_URI: "postgresql://postgres:postgres@db:5432/travel_exp_planner_rfl_db"
+      GROQ_API_KEY: "${GROQ_API_KEY}"
+      INTERNAL_API_KEY: "${INTERNAL_API_KEY}"
+    depends_on:
+      - db
+      - n1_embedding
+
+  n16_web_ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.n16
+    container_name: travel_exp_planner_rfl_n16
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_URL: "http://n18_orchestrator:8000"
+    depends_on:
+      - n18_orchestrator
+
 volumes:
   postgres_data:
+  hf_cache:
