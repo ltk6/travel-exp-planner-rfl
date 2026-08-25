@@ -13,7 +13,7 @@ Planned structure of documentation and deliverables for throughout the 10-month 
 │   ├── highlights.md                          # (Phase 0–8) Living log of metrics, achievements, and decisions for resumes
 │   ├── openapi.json                           # (Phase 8) Auto-generated FastAPI OpenAPI spec
 │   ├── architecture-as-is.md                  # (Phase 0) Baseline snapshot of the monolithic architecture
-│   ├── N1-embed-api.md                        # (Phase 1) API contract and details for the extracted N1 microservice
+│   ├── n1-embed-api.md                        # (Phase 1) API contract and details for the extracted N1 microservice
 │   ├── deployment-runbook.md                  # (Phase 2) Vagrant provisioning, Cloudflare Tunnel config, credential rotation
 │   ├── incident-2026-12-n5-429-storm.md       # (Phase 3) Blameless postmortem for the Locust load test failure
 │   ├── ephemeral-infra-log.md                 # (Phase 2–8) Log of time & failure points for Vagrant/`kind` teardowns
