@@ -36,3 +36,6 @@ Thumbs.db
 # --- Project Specific Caches ---
 *cache*.json
 backend/n18_orchestrator/image_cache/
+
+# --- Database backups ---
+backups/
