@@ -48,13 +48,11 @@ Requires Docker Desktop installed and running.
 
 ```mermaid
 graph TD
-    Client[Web Browser / Developer Client] -->|port 3000| N16[N16 Frontend Container]
-    Client -->|port 8000| N18[N18 Backend Container]
-    Client -->|port 5432| DB[(PostgreSQL + pgvector Container)]
+    Browser[Web Browser / Client] -->|port 3000| N16[N16 Web UI: Next.js]
     
     subgraph Local Docker Bridge Network
-        N16 -->|http://n18_orchestrator:8000| N18
-        N18 -->|postgresql://db:5432| DB
+        N16 -->|http://n18_orchestrator:8000| N18[N18 Backend Orchestrator]
+        N18 -->|postgresql://db:5432| DB[(PostgreSQL + pgvector)]
         N18 -->|http://n1_embedding:8001| N1[N1 Embedding Container]
     end
 ```
