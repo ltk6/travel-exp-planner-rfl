@@ -19,13 +19,9 @@ COPY frontend/n16_web_ui/ .
 
 # Build Next.js app in production mode
 ENV NEXT_TELEMETRY_DISABLED=1
-<<<<<<< Updated upstream
-RUN npm run build
-=======
 ARG BACKEND_URL="http://n18_orchestrator:8000"
 ENV BACKEND_URL=$BACKEND_URL
 RUN --mount=type=cache,target=/app/.next/cache npm run build && npm prune --production
->>>>>>> Stashed changes
 
 # ==========================================
 # Stage 3: Minimal production runner
@@ -38,13 +34,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+  adduser --system --uid 1001 nextjs
 
-# Copy essential files for runtime execution with correct user permissions directly
-COPY --chown=nextjs:nodejs --from=builder /app/package.json ./package.json
+# Automatically leverage output traces to reduce image size
 COPY --chown=nextjs:nodejs --from=builder /app/public ./public
-COPY --chown=nextjs:nodejs --from=builder /app/node_modules ./node_modules
-COPY --chown=nextjs:nodejs --from=builder /app/.next ./.next
+COPY --chown=nextjs:nodejs --from=builder /app/.next/standalone ./
+COPY --chown=nextjs:nodejs --from=builder /app/.next/static ./.next/static
 
 USER nextjs
 
@@ -56,4 +51,4 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]
