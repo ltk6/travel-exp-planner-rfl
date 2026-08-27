@@ -20,7 +20,13 @@ COPY frontend/n16_web_ui/ .
 # Build Next.js app in production mode
 ENV NEXT_TELEMETRY_DISABLED=1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 RUN npm run build
+=======
+ARG BACKEND_URL="http://n18_orchestrator:8000"
+ENV BACKEND_URL=$BACKEND_URL
+RUN --mount=type=cache,target=/app/.next/cache npm run build && npm prune --production
+>>>>>>> Stashed changes
 =======
 ARG BACKEND_URL="http://n18_orchestrator:8000"
 ENV BACKEND_URL=$BACKEND_URL
@@ -38,7 +44,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+  adduser --system --uid 1001 nextjs
 
 # Copy essential files for runtime execution with correct user permissions directly
 COPY --chown=nextjs:nodejs --from=builder /app/package.json ./package.json
