@@ -68,7 +68,7 @@ def activities_service(request: Request, body: dict) -> dict:
     # ── N1 — Embed user query ─────────────────────────────────────────────────
     logger.info("N18 — Embedding user query via N1 Light...")
     _t0 = time.time()
-    bge_result = light_embed(N1EmbedInput(text=text, tags=tags, img_desc=img_desc))
+    bge_result = light_embed(N1EmbedInput(text=text, tags=tags, img_desc=img_desc).model_dump())
     stage_lats["N1_light_query"] = int((time.time() - _t0) * 1000)
 
     text_k   = bge_result.get("text_k", 0)
@@ -106,7 +106,7 @@ def activities_service(request: Request, body: dict) -> dict:
             text=(a.get("metadata", {}).get("name") or "") + ". " + (a.get("metadata", {}).get("description") or ""),
             tags=a.get("metadata", {}).get("tags") or [],
             img_desc="",
-        )
+        ).model_dump()
         for a in activities
     ]
     _t0 = time.time()
