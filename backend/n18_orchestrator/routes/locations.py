@@ -66,7 +66,7 @@ def recommend_service(request: Request, body: dict) -> dict:
     # ── N1 — Build user vectors ───────────────────────────────────────────────
     logger.info("N18 — Embedding user query via N1 (BGE-M3)...")
     _t0 = time.time()
-    n1_result = embed(N1EmbedInput(text=text, tags=tags, img_desc=img_desc))
+    n1_result = embed(N1EmbedInput(text=text, tags=tags, img_desc=img_desc).model_dump())
     stage_lats["N1"] = int((time.time() - _t0) * 1000)
 
     text_k = n1_result.get("text_k", 0)

@@ -36,6 +36,7 @@ services:
       PG_URI: "postgresql://postgres:postgres@db:5432/travel_exp_planner_rfl_db"
       GROQ_API_KEY: "${GROQ_API_KEY}"
       INTERNAL_API_KEY: "${INTERNAL_API_KEY}"
+      N1_SERVICE_URL: "http://n1_embedding:8001"
     depends_on:
       - db
       - n1_embedding
@@ -50,6 +51,7 @@ services:
       - "3000:3000"
     environment:
       BACKEND_URL: "http://n18_orchestrator:8000"
+      INTERNAL_API_KEY: "${INTERNAL_API_KEY}"
     depends_on:
       - n18_orchestrator
 

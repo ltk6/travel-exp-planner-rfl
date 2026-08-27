@@ -13,11 +13,15 @@ Planned structure of documentation and deliverables for throughout the 10-month 
 │   ├── highlights.md                          # (Phase 0–8) Living log of metrics, achievements, and decisions for resumes
 │   ├── openapi.json                           # (Phase 8) Auto-generated FastAPI OpenAPI spec
 │   ├── architecture-as-is.md                  # (Phase 0) Baseline snapshot of the monolithic architecture
+│   ├── network-diagram.md                     # (Phase 1) Docker Compose network topology and routing constraints
 │   ├── n1-embed-api.md                        # (Phase 1) API contract and details for the extracted N1 microservice
 │   ├── deployment-runbook.md                  # (Phase 2) Vagrant provisioning, Cloudflare Tunnel config, credential rotation
-│   ├── incident-2026-12-n5-429-storm.md       # (Phase 3) Blameless postmortem for the Locust load test failure
 │   ├── ephemeral-infra-log.md                 # (Phase 2–8) Log of time & failure points for Vagrant/`kind` teardowns
 │   ├── golden-path-metrics.md                 # (Phase 7) Manual baseline vs. CLI-assisted time-to-first-deploy comparison
+│   │
+│   ├── incidents/                             # Vendor and operational incident reports
+│   │   ├── 2026-08-27-groq-model-deprecation.md  # (Phase 0) INC-001: Groq deprecated primary LLM chain models
+│   │   └── 2026-12-n5-429-storm.md               # (Phase 3) Blameless postmortem for the Locust load test failure
 │   │
 │   ├── adrs/                                  # (Phase 0–8) Architecture Decision Records
 │   │   ├── 0000-use-ai-for-development.md             # (Phase 0)
@@ -26,8 +30,8 @@ Planned structure of documentation and deliverables for throughout the 10-month 
 │   │   ├── 0003-n1-only-extracted-spoke.md            # (Phase 1)
 │   │   ├── 0004-http-rest-over-grpc.md                # (Phase 1)
 │   │   ├── 0005-compose-before-kubernetes.md           # (Phase 1)
-│   │   ├── 0006-n1-fully-local.md                     # (Phase 1)
-│   │   ├── 0007-secrets-management-strategy.md         # (Phase 1) .env → K8s Secrets → sealed-secrets path
+│   │   ├── 0006-env-secrets-management.md              # (Phase 1) .env → K8s Secrets → sealed-secrets path
+│   │   ├── 0007-jenkins-over-github-actions.md         # (Phase 2) Self-hosted CI/CD on Vagrant
 │   │   ├── 0008-kind-vs-cloud-managed-cluster.md       # (Phase 4)
 │   │   ├── 0009-hpa-target-metric-choice.md            # (Phase 4)
 │   │   ├── 0010-terraform-module-boundaries.md         # (Phase 4)
