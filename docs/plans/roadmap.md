@@ -125,26 +125,29 @@
 ## Phase 2 — Local CI/CD & Public Ingress (Oct–Nov)
 
 **Goals**
-- Implement automated linting, testing, and vulnerability checks in local CI.
+- Implement automated linting, testing, and vulnerability checks in a self-hosted local CI.
 - Expose the local orchestrator securely to the public Next.js UI on Vercel.
 
 **Tasks**
 - **Trunk-Based Workflow**: Merge to `main` via short-lived feature branches and PRs gated by CI.
+- **Jenkins Provisioning**: Install and configure Jenkins inside the Vagrant VM via automated provisioning scripts. Jenkins acts as the sole CI controller; no external cloud runners are used.
+- **Pipeline-as-Code**: Define all CI stages in a `Jenkinsfile` at the repo root (lint, test, build, scan, deploy).
 - **Linting & Formatting**: Enforce formatting gates (`ruff`, `eslint`, `prettier`) in CI.
 - **Vulnerability Scans**: Add container vulnerability scanning (`trivy`) to the build pipeline.
-- **Vagrant Environment**: Run the docker-compose stack inside a headless Vagrant VM (`vagrant up`). Run `kind` directly on host in Phase 4.
+- **Vagrant Environment**: Run the docker-compose stack and Jenkins controller inside a headless Vagrant VM (`vagrant up`). Run `kind` directly on host in Phase 4.
 - **Cloudflare Ingress**: Set up a Cloudflare Tunnel daemon on the Vagrant VM to expose N18's API.
 - **Frontend Integration**: Connect the Next.js UI on Vercel to N18 through the tunnel.
-- **Build Caching**: Configure BuildKit layer caching for Docker builds in CI.
+- **Build Caching**: Configure BuildKit layer caching for Docker builds in the Jenkins pipeline.
 - **Multi-Arch Builds**: Build both `linux/amd64` and `linux/arm64` image tags for cloud deployment.
 - **Tests**: Wire contract and integration smoke tests into CI.
 
 **Docs**
-- `docs/deployment-runbook.md` (Vagrant provisioning, tunnel configuration, token rotation).
+- ADR: Jenkins over GitHub Actions for local-first CI/CD.
+- `docs/deployment-runbook.md` (Vagrant provisioning, Jenkins setup, tunnel configuration, token rotation).
 
 **Deliverables**
-- Local CI runner configuration files (`.github/workflows/`).
-- `Vagrantfile` with automated provisioning scripts.
+- `Jenkinsfile` at repo root.
+- `Vagrantfile` with automated Jenkins + docker-compose provisioning scripts.
 - Version-controlled `cloudflared` config.
 - Integration tests in `tests/smoke/`.
 
@@ -171,7 +174,7 @@
 - **Postmortem**: Document recovery times, system failures, and metric drops in a blameless postmortem.
 
 **Docs**
-- `docs/incident-2026-12-n5-429-storm.md` (postmortem).
+- `docs/incidents/2026-12-n5-429-storm.md` (postmortem).
 - `docs/local-infrastructure-disruption-runbook.md` (chaos steps & recovery procedures).
 
 **Deliverables**
@@ -319,6 +322,8 @@ No active development.
 | Phase 8 block runs tight | Maintain a 2-day contingency buffer in July. |
 | External learning requirements delay milestones | Drop optional integrations to preserve must-ship deliverables. |
 | Metrics differ across resumes | Enforce `docs/highlights.md` as the single source of truth. |
+| **[Realized]** Groq deprecated primary LLM models (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`); surviving chain capped at 8K TPM | Chain updated to `qwen3.6-27b → gpt-oss-120b → gpt-oss-20b`; Phase 3 load test hypothesis strengthened — 8K TPM makes rate exhaustion easier to trigger deliberately. |
+| Groq deprecates remaining supported models before Phase 3 | All model names are isolated in `n5/config.py` and `n17/config.py`; swap requires one-line change per file. |
 
 ---
 
