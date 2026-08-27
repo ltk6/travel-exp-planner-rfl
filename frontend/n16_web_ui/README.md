@@ -37,14 +37,10 @@ npm run dev
 
 The app runs at [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
-For a full-stack startup (backend + frontend together), use the project root script:
+For a full-stack startup (backend + frontend together), use the project's Docker Compose stack from the root directory:
 
 ```bash
-# Windows
-run.bat
-
-# Linux / macOS
-./run.sh
+docker compose up -d
 ```
 
 ---

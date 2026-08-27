@@ -22,10 +22,11 @@ Living document. Updated at the end of every phase.
   - `/feedback/activities` (N17 + LLM): 17470.0ms P95
 - **Reliability Risk:** N5 calls Groq synchronously. A `429` blocks N18 workers → cascade failure. To be tested in Phase 3.
 
-### Vendor Incidents
+### Incidents
 
 - **Pre-Phase 0 — Groq deprecated `meta-llama/llama-4-scout-17b`:** Was part of an earlier LLM chain iteration. Removed by Groq before Phase 0 baseline work began; no impact on recorded benchmarks.
 - **2026-08-27 — [INC-001: Groq mass model deprecation](../incidents/2026-08-27-groq-model-deprecation.md):** `llama-3.3-70b-versatile` and `llama-3.1-8b-instant` removed. Surviving chain: `qwen3.6 → qwen3.8 → gpt-oss-120b → gpt-oss-20b`. All models capped at 8K TPM. Resolved < 1 hour.
+- **2026-08-27 — [INC-002: Build Failures from Untracked Git Leftovers](../incidents/2026-08-27-git-leftover-files-build-failure.md):** Untracked local files broke Docker builds, validating the architectural need for Phase 2 CI/CD automation.
 
 ### Key Decisions (ADRs)
 
@@ -46,7 +47,7 @@ Living document. Updated at the end of every phase.
 - **Secrets Baseline:** `.env.example` with all required keys; `.env` excluded via `.gitignore`.
 - **Backup Script:** `scripts/pg_dump_cron.sh` — local Postgres volume backup.
 - **Service Contract:** `docs/n1-embed-api.md` — N1 API contract documenting all endpoints.
-- **Outstanding:** Container network diagram not yet produced. Carry into Phase 2 documentation sprint.
+- **Container Network Diagram:** `docs/network-diagram.md` — mapping local isolation and container boundaries.
 
 ### Key Decisions (ADRs)
 

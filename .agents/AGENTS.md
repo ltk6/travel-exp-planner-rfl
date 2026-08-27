@@ -97,7 +97,6 @@ These rules define the repository-specific styling and workflow conventions that
 | Active Phase | **Phase 2 — Local CI/CD & Public Ingress (Oct–Nov)** |
 | Previous Phase | Phase 1 — Containerization & Local Stack ✅ Complete |
 | Next Phase | Phase 3 — Chaos Engineering & Failure Testing (December) |
-| Open Carry-overs | Container network diagram (from Phase 1) |
 
 **Update this table** whenever a phase is completed or a new one begins.
 

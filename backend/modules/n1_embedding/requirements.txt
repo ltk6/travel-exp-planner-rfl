@@ -1,2 +1,0 @@
-# Empty requirements file because this module has been migrated to a service.
-# Kept to satisfy root requirements.txt references under code freeze constraints.

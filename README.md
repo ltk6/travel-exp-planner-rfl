@@ -29,9 +29,9 @@ Requires Docker Desktop installed and running.
    docker compose up -d
    ```
 3. **Database Initialization & Seeding:**
-   *(Run this once after the initial startup)*
+   *(Run this once after the initial startup to populate locations and vectors)*
    ```bash
-   venv/Scripts/python backend/n3_database/seeds/seed_with_vectors.py --reset-all
+   docker compose exec n18_orchestrator python backend/n3_database/seeds/seed_with_vectors.py --reset-all
    ```
 
 ### Service Endpoints

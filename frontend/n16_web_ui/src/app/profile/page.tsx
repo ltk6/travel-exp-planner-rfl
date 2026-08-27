@@ -120,12 +120,12 @@ function HistoryCard({ item }: { item: HistoryItem }) {
     store.setPayload(item.input_data as RecommendPayload);
 
     const outputData = item.output_data as Record<string, unknown>;
-    
+
     // Extract both activities caches and switcher preferences
     const preferLlm = (outputData.preferLlmActivities ?? {}) as Record<string, boolean>;
     const actResults = (outputData.activityResults ?? {}) as Record<string, ActivitiesResponse>;
     const actResultsLlm = (outputData.activityResultsLlm ?? {}) as Record<string, ActivitiesResponse>;
-    
+
     // Backward compatibility for legacy recommendations
     const legacyActivities = outputData.activities as Record<string, ActivitiesResponse> | undefined;
 
@@ -133,20 +133,11 @@ function HistoryCard({ item }: { item: HistoryItem }) {
     const { preferLlmActivities, activityResults, activityResultsLlm, activities, ...results } = outputData;
     store.setResults(results as RecommendResponse);
 
-    // Restore location switcher preferences
-    Object.entries(preferLlm).forEach(([locId, val]) => {
-      store.setPreferLlmActivities(locId, val);
-    });
-
     // Clear and restore both activities caches
     store.clearActivityResults();
-    
+
     Object.entries(actResults).forEach(([locId, data]) => {
       store.setActivityResult(locId, data);
-    });
-
-    Object.entries(actResultsLlm).forEach(([locId, data]) => {
-      store.setActivityResultLlm(locId, data);
     });
 
     // Restore legacy data structure if present
