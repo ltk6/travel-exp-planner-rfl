@@ -83,7 +83,8 @@ These rules define the repository-specific styling and workflow conventions that
 
 ## Phase Awareness
 
-- The project is divided into phases 0–8. See `docs/plans/roadmap.md` for scope and timing.
+- The project is divided into phases 0–15. See `docs/plans/roadmap.md` for scope and timing.
+- Development is strictly **Ubuntu 24.04 LTS native engine** (`docker-ce`). Every phase ends with a clean-room bring-up test.
 - Do not implement features scoped to a future phase unless explicitly instructed.
 - When adding code or docs, tag the relevant phase in comments or front matter where the roadmap does so (e.g., `(Phase 1)`).
 - The current active phase is tracked in the **Current Phase State** section of this file. Do not assume; read it.
@@ -94,9 +95,9 @@ These rules define the repository-specific styling and workflow conventions that
 
 | Field | Value |
 |---|---|
-| Active Phase | **Phase 2 — Local CI/CD & Public Ingress (Oct–Nov)** |
-| Previous Phase | Phase 1 — Containerization & Local Stack ✅ Complete |
-| Next Phase | Phase 3 — Chaos Engineering & Failure Testing (December) |
+| Active Phase | **Phase 2 — Local CI and Bring-up Contract v0 (Nov 2026)** |
+| Previous Phase | Phase 1 — Containerization and the Anywhere Contract ✅ Complete (Sep–Oct 2026) |
+| Next Phase | Phase 3 — Tunnel, Simulator, Load and Chaos (Dec 2026) |
 
 **Update this table** whenever a phase is completed or a new one begins.
 

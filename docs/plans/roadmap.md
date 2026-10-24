@@ -1,363 +1,134 @@
-# Travel Experience Planner — Capstone Roadmap
-### Triple-Track Internship Preparation — 10-Month Plan (Zero-Cost: Local-First + On-Demand OCI)
+# Travel Experience Planner: Platform Roadmap v2
 
----
+**Aug 2026 to Dec 2027** | Real-world DevOps, cloud and infrastructure practice | 10 hours per week | Ubuntu-first, runnable anywhere
 
-## Executive Summary
+## 1. Scope
 
-**Architecture — Current State.** Monolith with hub-and-spoke logic. **N18** (FastAPI orchestrator) calls modules **N1–N17** in-process. The **N3** database module connects to a remote managed Supabase PostgreSQL instance. A shared `contracts.py` (Pydantic V2) enforces interface boundaries. **N16** (Next.js frontend) is deployed separately.
+Build, break, fix and operate one real system the way a platform team would. The system runs on Ubuntu natively. Every phase ends with a clean-room bring-up test from a fresh Ubuntu clone.
 
-**Zero-Cost Infrastructure.** 100% of backend services, databases (migrating N3 off Supabase), Kubernetes clusters, and monitoring run locally on developer hardware using Terraform, `kind` (Kubernetes in Docker), and Vagrant. N18 is exposed to Vercel (N16) via a Cloudflare Tunnel. An on-demand OCI Always Free ARM64 environment ($0 tier) is spun up via Terraform solely for metrics collection and validation, then immediately destroyed.
-
-**Cloud Portability.** Terraform configurations and Kubernetes manifests are environment-neutral. Swapping from local `kind` to OCI ARM64 requires only a variable-file parameter change (`terraform apply -var-file="environments/oci.tfvars"`), with zero alterations to code or manifests.
+**The spine:** containerize, automate CI, expose publicly, break it with load and chaos, fix it with a circuit breaker, prove the fix with before/after numbers, run it on Kubernetes, codify it in Helm and Terraform, observe it, run it on a real cloud, deploy it by GitOps, harden it, rehearse disaster recovery, and prove it runs anywhere.
 
-**Application Code Freeze.** Core application code freezes after Phase 0. Subsequent phases focus on platform infrastructure (containerization, orchestration, resilience, metrics). A CD sprint runs on top of this hardened system once the infrastructure is stable.
-
-**Linux Knowledge.** Hands-on Linux administration, networking, and kernel metrics are acquired just-in-time as required by each phase's tasks.
-
-**Track Focuses:**
-
-| Track | Target Role | Core Proof Artifact |
-|---|---|---|
-| **Network Engineer** | Network Ops / Cloud Networking | Local network segmentation using Kubernetes `NetworkPolicies`, traffic routing, and Cloudflare Tunnel ingress. |
-| **Software Engineer** | Backend / Full-Stack | Hub-and-spoke topology, contract-tested interfaces, and a custom circuit breaker finite-state machine (FSM). |
-| **Cloud / DevOps** | Platform / SRE / DevOps | Terraform-managed local Kubernetes cluster, cloud-portable IaC, self-hosted CI/CD, and local Prometheus/Grafana monitoring. |
+## 2. Ground rules
 
-**Core Spine:** Containerize the stack → extract N1 to a local microservice → expose N18 via Cloudflare Tunnel → load-test N5 Groq API rate limits to force uvicorn thread exhaustion → build a circuit breaker → validate the fix via before/after Locust metrics.
+**Platform.** Ubuntu 24.04 LTS is the primary host for all development and operations. Docker Engine (not Docker Desktop), WSL2, and macOS are secondary targets. The `make shell` toolbox brings parity on secondary hosts.
 
-**Scope Tiers.** Kubernetes uses `kind` locally. OCI is on-demand only. Prometheus/Grafana runs locally. High-priority items are must-ship; low-priority tools degrade gracefully to simpler implementations if time is tight.
+**Hours.** 10 h/week is about 43 h/month and about 600 h across the 60 weeks. Each month reserves about 6 h of standing overhead: a 1 h weekly ritual (update `docs/highlights.md` and `docs/ephemeral-infra-log.md`) plus a 2 h clean-room run in the last week. That leaves about 37 h of build time per month.
 
----
+**Tiers replace buffers.** Every task is tagged:
 
-## Scope & Artifact Map
+- **M (must-ship):** the phase is not done without it. About 60% of the hours.
+- **S (should-ship):** normally done, and the first thing cut when behind. About 25%.
+- **X (stretch):** only when ahead. About 15%.
 
-| Artifact | Tracks | Tier / Fallback |
-|---|---|---|
-| Shared Pydantic V2 contracts (`contracts.py`, module ↔ N18) | SWE | Must-ship |
-| Automated contract tests wired into local CI | SWE, Platform | Must-ship |
-| Multi-stage Dockerfiles + healthchecks | SWE, Platform | Must-ship |
-| Local CI/CD pipeline with live deploy (via Cloudflare Tunnel) | SWE, Platform | Must-ship |
-| Locust load tests + structured logs | SWE, Platform | Must-ship |
-| Circuit breaker FSM + unit tests + integration tests | SWE, Platform | Must-ship |
-| Before/after comparison metrics (failure vs fallback) | SWE, Platform | Must-ship |
-| Scaffolding CLI + DX metrics | SWE, Platform | Must-ship |
-| Multi-arch images (`linux/amd64` + `linux/arm64`) for N18 and N1 | SWE, Platform | Must-ship |
-| OCI on-demand pipeline (Terraform + Helm, Phase 5) | Platform | Must-ship |
-| Decision records (ADRs) | Network, SWE, Platform | Must-ship |
-| Resumes per track | Network, SWE, Platform | Must-ship |
-| Local Kubernetes (`kind`) cluster + NetworkPolicies | Network, Platform | Degrade-gracefully -> written configs only |
-| HPA autoscaling | Platform | Degrade-gracefully -> basic scaling config |
-| Prometheus/Grafana dashboard | Platform | Degrade-gracefully -> dashboard optional; runbook must-ship |
-| Governance-as-code admission checks in CI | Platform | Degrade-gracefully -> manual checklist |
-| Platform documentation | Platform | Degrade-gracefully -> `PLATFORM.md` only |
-| Container image scanning (`trivy`) in CI | SWE, Platform | Degrade-gracefully -> manual scan reports |
-| Demo video | Network, SWE, Platform | Degrade-gracefully -> minimal cut |
-
----
-
-## Timeline at a Glance
-
-| Period | Phase | Focus |
-|---|---|---|
-| August | 0 | Baseline benchmarks, architecture audit |
-| September | 1 | Docker, N1 microservice extraction, local database |
-| Oct–Nov | 2 | Local CI/CD, Vagrant environment, Cloudflare Tunnel |
-| December | 3 | Load testing & chaos validation (Compose only) |
-| January | — | Exam buffer (no project work) |
-| Feb–Mar | 4 | Terraform-managed local `kind` cluster, NetworkPolicies |
-| April | 5 | Prometheus/Grafana observability, on-demand OCI pipeline |
-| May | 6 | Circuit breaker implementation & N5 async refactor |
-| June, weeks 1–2 | 7 | Developer experience: scaffolding CLI, compliance checks |
-| June, weeks 3–4 | 8 | Resumes, documentation freeze, demo video |
-
----
-
-## Phase 0 — Baseline (August)
-
-**Goals**
-- Measure baseline latency, throughput, and system behavior under light load.
-- Document current state (monolith, managed Supabase DB, in-process execution) and record primary bottlenecks.
-
-**Tasks**
-- **Architecture Audit**: Document module boundaries, in-process execution contracts, and current Supabase PostgreSQL schema.
-- **Latency Baseline**: Benchmark N5/N18 endpoints; record p50/p95 response times.
-- **Hypothesis Definition**: Document Groq API synchronous execution vulnerabilities as a point of failure to be tested in Phase 3.
-- **Highlights Log**: Initialize `docs/highlights.md` to track metrics and decisions across phases.
-
-**Docs**
-- System description and problem statement in top-level `README.md`.
-- `docs/architecture-as-is.md` detailing current state.
+If a month ends with an M item unfinished, it moves into the next month, and that month's X items are dropped first, then its S items. M items are never dropped, only moved. Every phase has an exit criterion that is a command or a number, not a feeling.
 
-**Deliverables**
-- `benchmarks/results/2026-08-baseline.json`
-- `docs/architecture-as-is.md`
+**Code freeze, relaxed.** After Phase 0, application changes are limited to bring-up support (migrations, seed data, config via env), observability (`/metrics`, structured logs, trace hooks) and resilience (circuit breaker, async N5 path). No new product features.
 
----
+**Zero cost.** Monthly spend stays $0. Put a budget alert ($1) on any cloud account. A domain name is the one optional purchase (see Phase 3).
 
-## Phase 1 — Containerization & Local Stack (September)
+**Volatile facts.** Tooling moves fast. At the start of each phase spend 30 minutes re-checking the items in [Appendix D](roadmap-appendices.md#appendix-d-volatile-facts-to-re-verify-at-each-phase-start) and record the result in `docs/volatile-facts.md`.
 
-**Goals**
-- Replace host-bound `run.bat` with a containerized local stack.
-- Extract N1 (embeddings) into an independent service; maintain existing interface contract.
-
-**Tasks**
-- **Extract N1 Service**: Move embedding generation logic to a standalone containerized FastAPI service. Keep it inside the local Docker network.
-- **Write Dockerfiles**: Implement multi-stage builds (`Dockerfile.n18`, `Dockerfile.n1`, `Dockerfile.n16`). Target `linux/amd64` and `linux/arm64`.
-- **Compose Orchestration**: Write `docker-compose.yml` linking N1, N18, Next.js, and a local PostgreSQL+`pgvector` container on a shared bridge network. Migrate off Supabase.
-- **Service Configuration**: Inject database credentials and API endpoints via environment variables.
-- **Secrets Baseline**: Commit `.env.example` with required keys; exclude actual secrets via `.gitignore`.
-- **Backup Script**: Write `scripts/pg_dump_cron.sh` to back up the local database volume.
-- **Architecture Mapping**: Diagram container network paths.
-
-**Docs**
-- ADR: Standalone service boundary choice.
-- ADR: REST vs gRPC for internal service communication.
-- ADR: Docker Compose vs Kubernetes for local development.
-- ADR: Secrets management pipeline.
-- `docs/N1-embed-api.md` (service contract).
-
-**Deliverables**
-- Functional local Compose stack with active healthchecks.
-- Container network diagram.
-
----
-
-## Phase 2 — Local CI/CD & Public Ingress (Oct–Nov)
-
-**Goals**
-- Implement automated linting, testing, and vulnerability checks in a self-hosted local CI.
-- Expose the local orchestrator securely to the public Next.js UI on Vercel.
-
-**Tasks**
-- **Trunk-Based Workflow**: Merge to `main` via short-lived feature branches and PRs gated by CI.
-- **Jenkins Provisioning**: Install and configure Jenkins inside the Vagrant VM via automated provisioning scripts. Jenkins acts as the sole CI controller; no external cloud runners are used.
-- **Pipeline-as-Code**: Define all CI stages in a `Jenkinsfile` at the repo root (lint, test, build, scan, deploy).
-- **Linting & Formatting**: Enforce formatting gates (`ruff`, `eslint`, `prettier`) in CI.
-- **Vulnerability Scans**: Add container vulnerability scanning (`trivy`) to the build pipeline.
-- **Vagrant Environment**: Run the docker-compose stack and Jenkins controller inside a headless Vagrant VM (`vagrant up`). Run `kind` directly on host in Phase 4.
-- **Cloudflare Ingress**: Set up a Cloudflare Tunnel daemon on the Vagrant VM to expose N18's API.
-- **Frontend Integration**: Connect the Next.js UI on Vercel to N18 through the tunnel.
-- **Build Caching**: Configure BuildKit layer caching for Docker builds in the Jenkins pipeline.
-- **Multi-Arch Builds**: Build both `linux/amd64` and `linux/arm64` image tags for cloud deployment.
-- **Tests**: Wire contract and integration smoke tests into CI.
-
-**Docs**
-- ADR: Jenkins over GitHub Actions for local-first CI/CD.
-- `docs/deployment-runbook.md` (Vagrant provisioning, Jenkins setup, tunnel configuration, token rotation).
-
-**Deliverables**
-- `Jenkinsfile` at repo root.
-- `Vagrantfile` with automated Jenkins + docker-compose provisioning scripts.
-- Version-controlled `cloudflared` config.
-- Integration tests in `tests/smoke/`.
-
----
-
-## Ephemeral Infrastructure Reconstruction Runbook
-
-- Track and log the time required to tear down and rebuild environments (`vagrant destroy && vagrant up`, `kind delete cluster && terraform apply`).
-- Log issues and timings in `docs/ephemeral-infra-log.md` at the start of each phase to verify configuration reproducibility.
-
----
-
-## Phase 3 — Chaos Engineering & Failure Testing (December)
-
-**Goals**
-- Validate uvicorn worker thread blocking under rate-limited upstream calls.
-- Document system behavior under database drops, latency injection, and container failure.
-
-**Tasks**
-- **Load Script**: Write `loadtests/locustfile.py` with representative traffic ratios.
-- **Load Test**: RAMP Locust users against the Compose stack to force Groq API thread exhaustion.
-- **Chaos Scenarios**: Terminate the database container during active requests, inject latency into internal API calls, and kill uvicorn workers.
-- **Backup Verification**: Validate database recovery by restoring data from a cron-generated backup.
-- **Postmortem**: Document recovery times, system failures, and metric drops in a blameless postmortem.
-
-**Docs**
-- `docs/incidents/2026-12-n5-429-storm.md` (postmortem).
-- `docs/local-infrastructure-disruption-runbook.md` (chaos steps & recovery procedures).
-
-**Deliverables**
-- `loadtests/locustfile.py`.
-- Recorded benchmarks of failure modes and restore runs.
-
----
-
-## January — Exam Buffer
-
-No active development.
+## 3. The Anywhere Contract
 
----
+**Goal:** on a supported Ubuntu host, a fresh clone plus one command brings the whole system up healthy, one command proves it, and one command removes it.
 
-## Phase 4 — Local, Cloud-Portable Kubernetes Deployment (Feb–Mar)
+### 3.1 Command surface
 
-**Goals**
-- Deploy the orchestrator, database, and embedding service onto local Kubernetes.
-- Enforce network boundary isolation and verify cloud-portable infrastructure manifests.
+| Command | What it does |
+| --- | --- |
+| `make doctor` | Checks tool versions, CPU architecture, free RAM and disk, open ports, Docker access. Prints exactly what is missing. |
+| `make up TARGET=compose` | Provisions the target, pulls prebuilt images (or builds with `BUILD=1`), runs migrations, seeds data and starts the stack. TARGET is one of `compose`, `kind`, `k3s`, `oci`. |
+| `make verify TARGET=...` | Runs the smoke suite against the target's URL. Exit code 0 means healthy. Logs the timing. |
+| `make down TARGET=...` | Removes everything `up` created. |
+| `make shell` | Opens the toolbox container (terraform, kubectl, helm, kind, trivy, locust, cosign) so the host needs only git, make and Docker Engine. |
 
-**Tasks**
-- **IaC Structure**: Create modular Terraform configs (`infra/modules/`) with environment parameterization (`local.tfvars` vs `oci.tfvars`).
-- **Local Cluster**: Spin up a local cluster via `kind` on the host OS.
-- **K8s Manifests**: Write Deployments, Services, ConfigMaps, and HPA targets for N18 and N1.
-- **Probes**: Configure liveness and readiness endpoints.
-- **Secrets**: Move configuration parameters and credentials to K8s Secrets.
-- **Image Sourcing**: Load local image builds directly into `kind` nodes to bypass remote registry pulls.
-- **Autoscaling**: Configure autoscaling via KEDA using request queue metrics.
-- **Network Isolation**: Enforce network boundaries between components using `NetworkPolicies`.
-- **Validation**: Re-run Locust tests on `kind` to verify that increasing compute replicas does not bypass external API limits.
-- **Rollback Verification**: Test manual deployment rollbacks via `kubectl rollout undo`.
+**Non-Ubuntu note.** On Windows, run these from WSL2 Ubuntu or from inside the toolbox. A thin `bootstrap.ps1` only starts the toolbox container and contains no logic.
 
-**Docs**
-- ADR: `kind` vs managed cloud cluster selection.
-- ADR: Metrics source selection for HPA/autoscaling.
-- ADR: Terraform configuration boundaries for portability.
-- Network flow diagram showing namespaces and pod boundaries.
+### 3.2 Targets
 
-**Deliverables**
-- Terraform configurations and Kubernetes manifests (`k8s/`, `infra/`).
-- HPA and rollback validation reports.
-
----
-
-## Phase 5 — Observability & Ephemeral Infrastructure Governance (April)
-
-**Goals**
-- Implement metrics scraping and visual dashboards for the local cluster.
-- Provision and tear down the target OCI ARM64 cluster using the portable IaC modules.
-
-**Tasks**
-- **Reconstruction Logging**: Log local cluster teardown and redeployment loops.
-- **Logging**: Configure structured stdout JSON logging in N18.
-- **Metrics Stack**: Deploy Prometheus and Grafana onto `kind` via Terraform Helm charts.
-- **Dashboard**: Create a Grafana dashboard monitoring cluster latency, HTTP error codes, and pod scaling.
-- **OCI Deployment**: Run `terraform apply -var-file=environments/oci.tfvars` to spin up OCI ARM64 resources, run the Helm monitoring stack, and verify multi-arch images.
-- **Tear Down**: Destroy OCI resources immediately after verifying metrics capture.
-
-**Docs**
-- `docs/runbooks/embedding-service-down.md`.
-- `docs/runbooks/high-429-rate.md`.
-- `docs/ephemeral-infra-log.md` updates.
-
-**Deliverables**
-- Prometheus/Grafana manifests, dashboard configurations, and live OCI run screenshots.
-
----
-
-## Phase 6 — Resilience: Circuit Breaker Refactor (May)
-
-**Goals**
-- Mitigate uvicorn worker blocking under rate-limited upstream calls.
-
-**Tasks**
-- **Circuit Breaker**: Implement a state-based circuit breaker wrapping N5 Groq calls with backup fallbacks.
-- **Unit Tests**: Add tests verifying state transitions (Closed, Open, Half-Open).
-- **Concurrency Tests**: Write integration tests demonstrating resilience under concurrent upstream failures.
-- **Locust Verification**: Re-run Phase 3 Locust load tests against local and OCI targets; verify `/health` remains responsive during Groq API rate limits.
-- **Metrics Comparison**: Chart response times and error rates (Phase 3 baseline vs. Phase 6 resolved).
-
-**Docs**
-- ADR: Circuit breaker FSM design and logic.
-- Update runbooks to include manual circuit breaker reset states.
-
-**Deliverables**
-- FSM logic, unit/concurrency tests, and before/after latency comparison charts.
-
----
-
-## Phase 7 — Developer Experience: Scaffolding CLI & Compliance (Jun 1–2)
-
-**Goals**
-- Provide automated template generation and static configuration analysis for new modules.
-
-**Tasks**
-- **Manual Timing Baseline**: Measure the manual developer time required to configure and deploy a new in-process spoke.
-- **CLI Tool**: Implement a CLI tool (`travel-cli`) to scaffold new modules matching template specifications (code structure, tests, manifests).
-- **Admission Checks**: Add a CI step verifying that new modules expose `/health` endpoints and matching schemas.
-- **CLI Validation**: Measure CLI-assisted deployment times; compare metrics against the manual baseline.
-- **Platform Index**: Compile `PLATFORM.md` detailing system endpoints and development workflows.
-
-**Docs**
-- ADR: Scaffolding CLI vs Developer Portal selection.
-- `docs/golden-path-metrics.md` (manual vs CLI times).
-
-**Deliverables**
-- CLI tool repository, CI compliance checks, and `PLATFORM.md`.
-
----
-
-## Phase 8 — Resumes, Documentation, and Demo Video (Jun 3–4)
-
-**Goals**
-- Freeze documentation, finalize resumes, and export verification media.
-
-**Tasks**
-- **Test Coverage**: Run coverage reports targeting ≥70% core backend coverage.
-- **API Spec**: Export raw OpenAPI schema files.
-- **Architecture File**: Compile `ARCHITECTURE.md` showing system flows, ADR lists, and portability constraints.
-- **Resume Preparation**: Build track-specific resumes mapping highlights from `docs/highlights.md` to target DevOps, software, and networking keywords.
-- **Recording**: Record a video walkthrough demonstrating cluster deployment, chaos engineering injection, circuit breaker recovery, and golden-path CLI onboarding.
-- **Tear Down**: Verify all target cloud environments are destroyed.
-
-**Docs**
-- `demo/script.md` (narration guide).
-
-**Deliverables**
-- `ARCHITECTURE.md`, `docs/openapi.json`, final resumes, and demo video link.
-
----
-
-## Risk Register
-
-| Risk | Mitigation |
-|---|---|
-| Phase 3 schedule slips into January | Phase 3 tasks are kept small to accommodate scheduling overrides. |
-| Learning curve for Terraform/Kubernetes delays Phase 4 | Phase 4 is allocated two months to account for initial setup learning. |
-| Local infrastructure strains developer machine resources | Limit pod replica parameters and clean local node caches after runs. |
-| Cloudflare Tunnel drops mid-demo | Maintain a direct port-forwarding fallback path for local endpoints. |
-| OCI deployment fails to run cleanly | Confirm variable targets beforehand; fall back to dry-run plans if limits block provision. |
-| HPA does not scale under real traffic load | Set low scaling thresholds and use custom request triggers. |
-| OCI free-tier resources become unavailable | Rely on the local `kind` environment for core verification. |
-| CLI design suffers from scope creep | Restrict targets to simple code generators; defer portal integrations. |
-| Metrics timing is skewed by familiarity | Keep code configurations simple and document limitations. |
-| Phase 8 block runs tight | Maintain a 2-day contingency buffer in July. |
-| External learning requirements delay milestones | Drop optional integrations to preserve must-ship deliverables. |
-| Metrics differ across resumes | Enforce `docs/highlights.md` as the single source of truth. |
-| **[Realized]** Groq deprecated primary LLM models (`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`); surviving chain capped at 8K TPM | Chain updated to `qwen3.6-27b → gpt-oss-120b → gpt-oss-20b`; Phase 3 load test hypothesis strengthened — 8K TPM makes rate exhaustion easier to trigger deliberately. |
-| Groq deprecates remaining supported models before Phase 3 | All model names are isolated in `n5/config.py` and `n17/config.py`; swap requires one-line change per file. |
-
----
-
-## KPI Dashboard
-
-| Metric | Baseline (Aug) | Target (Jun) |
-|---|---|---|
-| p95 latency under load (local cluster) | From Phase 0 benchmark | ≥30% improvement |
-| 429 error rate under storm load | ~100% at peak (Phase 3) | <5% |
-| Contract-covered boundaries | Existing | 100% enforced in CI |
-| Decision records written | 0 | 9+ |
-| Test coverage (core modules) | Unmeasured | ≥70% |
-| Ephemeral infrastructure reconstructions logged | 0 | One per phase from Phase 2 onward |
-| Cloud-portability retarget proof (OCI) | N/A | Live `oci.tfvars` apply validated (Phase 5) |
-| OCI cluster spin-up time | N/A | ≤ 5 minutes |
-| Time-to-first-green-CI-run | N/A | Quantified reduction vs manual |
-| Monthly infrastructure spend | $0 | $0 |
-
----
-
-## Optional Add-Ons
-
-Only attempt once core deliverables are complete:
-- OpenTelemetry distributed tracing across the N18↔N1 boundary.
-- Provision a second OCI region for failover testing using the same Terraform modules.
-- Add a second golden-path template to the CLI.
-
----
-
-## Year 4 Preview
-
-- Distributed tracing and service mesh (Istio/Linkerd).
-- GitOps (ArgoCD/Flux) pipeline automation.
-- Managed cloud K8s cluster (EKS/GKE) with real VPC infrastructure.
-- Spot instances and cost-optimized autoscaling (Karpenter).
-- IAM least-privilege policies.
-- Internal developer portal (Backstage).
+| Target | What it is | Purpose |
+| --- | --- | --- |
+| compose | Docker Compose with profiles: core, ci, tunnel, obs, chaos | Fastest path, daily development |
+| kind | Kubernetes in Docker, deployed with the Helm chart | Learning and testing Kubernetes |
+| k3s | Any Linux VM reachable over SSH (Vagrant box, VPS, cloud instance). A bootstrap script installs k3s, then the same Helm chart is deployed | The portable cluster |
+| oci | Terraform creates the VCN, security rules and an Ampere A1 VM. cloud-init installs k3s, then it is identical to the k3s target | Cloud proof and arm64 proof |
+
+kind and k3s share one deploy path (the Helm chart, later Argo CD). Only the way the cluster is created differs.
+
+### 3.3 Design rules
+
+1. **One chart, one values file per environment.** Environment differences live only in `config/<target>/values.yaml` and `*.tfvars`, never in templates.
+2. **Everything external is a variable:** registry, hostname, ingress or gateway class, storage class, upstream LLM URL, database URL, object-store endpoint.
+3. **Secrets enter through one interface:** `.env.local`, then a Kubernetes Secret, later SOPS or sealed-secrets.
+4. **Idempotent.** Running `up` twice changes nothing. `down` then `up` converges to the same state.
+5. **Deterministic data.** Alembic migrations, a seed script and a cached embedding-model volume for N1, so a fresh machine does not depend on luck.
+6. **Offline-capable.** The upstream simulator replaces Groq, N16 runs as a container, and the tunnel and Vercel are optional.
+7. **Architecture-neutral.** Multi-arch images and no host-architecture assumptions.
+8. **Pinned versions.** Toolbox image plus `.tool-versions`; images pinned by digest in releases.
+9. **Enforced in CI.** A lint step fails on hardcoded registry hostnames, IP addresses or `latest` tags in manifests (conftest or grep first, Kyverno later).
+
+### 3.4 External edges register (`docs/external-edges.md`)
+
+| Edge | Used for | Required to run? | Fallback |
+| --- | --- | --- | --- |
+| Groq API | N5 LLM calls | No | `upstream-sim` (default in CI and tests). A real key is only for demos |
+| Vercel (N16) | Public UI | No | N16 container in the stack |
+| Cloudflare Tunnel | Public path from Vercel to N18 | No | Gateway or load balancer on cloud, port-forward locally |
+| GitHub | Source and PRs | Dev only | Any git remote; Jenkins polls any URL |
+| Image registry | Images | Yes | Local `registry:2` by default; GHCR or OCIR via variable |
+| OCI | Cloud proof | No | k3s on any VM |
+
+### 3.5 Time budgets
+
+- compose: 10 min or less from a fresh Ubuntu clone with images pulled.
+- kind: 15 min or less.
+- k3s on a fresh VM: 20 min or less.
+- oci: infrastructure in 5 min or less (original KPI), app healthy in 15 min or less in total.
+- **Done means:** a second person, or you on a wiped Ubuntu machine, follows only `docs/bring-up.md` and succeeds without asking a question.
+
+### 3.6 Clean-room ritual (2 h, last week of every month)
+
+Fresh clone into a fresh Ubuntu VM (Vagrant or any new VM), then `make doctor`, `make up`, `make verify`, `make down`. Record the time and every failure in `docs/ephemeral-infra-log.md`. A failure is fixed in the scripts or docs, never only on the machine.
+
+## 4. Timeline at a glance
+
+| Month | Phase | Theme | Exit criterion | Targets working |
+| --- | --- | --- | --- | --- |
+| Aug 2026 | 0 | Baseline | Benchmarks and audit committed | Monolith |
+| Sep–Oct 2026 | 1 | Docker, N1 extraction, local DB | Compose stack healthy | compose (Ubuntu dev machine) |
+| Nov 2026 | 2 | Local CI, clean-room VM, bring-up v0 | Red PR blocked; green merge pushes amd64+arm64 images | compose in clean-room Ubuntu VM |
+| Dec 2026 | 3 | Tunnel, simulator, load and chaos | Failure reproducible with one command; postmortem | compose + tunnel |
+| Jan 2027 | 4 | Resilience: breaker, async, metrics | /health survives the 429 storm; before/after charts | compose |
+| Feb 2027 | 5 | Kubernetes core | Stack on kind; rollback proven; UI works end to end | + kind (raw manifests) |
+| Mar 2027 | 6 | Helm chart and Terraform | `terraform apply` rebuilds the cluster and deploys the chart | kind via Helm and Terraform |
+| Apr 2027 | 7 | Network, gateway, k3s target | Denied connections proven; k3s VM bring-up works | + k3s |
+| May 2027 | 8 | Observability, SLOs, scaling | Alert fires during a Locust run | all, with obs |
+| Jun 2027 | 9 | OCI foundations | VCN, IAM, VM and k3s created and destroyed by Terraform | + oci (infra) |
+| Jul 2027 | 10 | OCI deployment, portability proof | Same chart runs unchanged on kind, k3s and OCI | oci full |
+| Aug 2027 | 11 | CD sprint: GitOps, secrets, supply chain | Merge to main deploys with no manual step; policy rejects a bad image | all via Argo CD |
+| Sep 2027 | 12 | Developer experience and tracing | CLI scaffolds a module; trace spans N18 to N1 | all |
+| Oct 2027 | 13 | Reliability: DR and game days | Restore drill passes with timings | all |
+| Nov 2027 | 14 | Freeze and publish | Docs, posts, demo, resumes done | all |
+| Dec 2027 | 15 | Anywhere gauntlet and v1.0 | Fresh clone to healthy on every target, timed | all, tagged v1.0 |
+
+## 5. Status: Phases 0 and 1 (Aug–Oct 2026)
+
+Tick what is actually done; anything unticked moves into November week 1.
+
+- [x] Phase 0: `benchmarks/results/2026-08-baseline.json`, `docs/architecture-as-is.md`, `docs/highlights.md`, hypothesis about synchronous Groq calls, INC-001 (Groq model deprecation).
+- [x] Phase 1: N1 extracted as a service; multi-stage Dockerfiles for N18, N1 and N16; Compose with healthchecks and a pgvector Postgres; Supabase migrated away; `.env.example`; `scripts/pg_dump_cron.sh`; network diagram; `docs/n1-embed-api.md`; ADRs 0000 to 0007.
+- [ ] **Known gaps to close in November week 1:** Alembic migrations plus a seed script, a cached model volume for N1, Compose profiles, a configurable upstream URL for N5.
+
+## 6. Month-by-month plans
+
+- [roadmap-phases-2-7.md](roadmap-phases-2-7.md) — Phase 2 (Nov 2026) through Phase 7 (Apr 2027)
+- [roadmap-phases-8-15.md](roadmap-phases-8-15.md) — Phase 8 (May 2027) through Phase 15 (Dec 2027)
+
+## 7. Appendices
+
+See [roadmap-appendices.md](roadmap-appendices.md) for:
+
+- Appendix A: KPI dashboard
+- Appendix B: Planned ADRs
+- Appendix C: Risk register
+- Appendix D: Volatile facts to re-verify at each phase start
